@@ -3,6 +3,8 @@
 	"package": "com.vanphuc.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"KeyboardMixin",
+		"MouseMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

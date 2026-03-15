@@ -1,4 +1,6 @@
-package com.vanphuc.modules;
+package com.vanphuc.module;
+
+import com.vanphuc.module.modules.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,7 @@ public class Modules {
     public Modules() {
         // Sau này tạo module nào thì đăng ký ở đây
         // add(new Flight());
+        add(new AutoClicker());
     }
 
     public static Modules get() {

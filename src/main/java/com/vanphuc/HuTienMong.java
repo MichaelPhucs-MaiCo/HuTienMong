@@ -1,6 +1,7 @@
 package com.vanphuc;
 
-import com.vanphuc.modules.Modules;
+import com.vanphuc.module.Modules;
+import com.vanphuc.utils.ConfigManager; // THÊM IMPORT NÀY
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +12,11 @@ public class HuTienMong implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Đang khởi tạo hệ thống Modules...");
-
-		// Khởi tạo bộ quản lý module
 		Modules.get();
 
-		LOGGER.info("Hệ thống đã sẵn sàng! Hẹ Hẹ 🚀");
+		// GỌI HÀM LOAD CONFIG TẠI ĐÂY
+		ConfigManager.load();
+
+		LOGGER.info("Hư Tiên Mộng🚀");
 	}
 }
