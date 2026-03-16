@@ -1,13 +1,11 @@
 package com.vanphuc.gui;
 
 import com.vanphuc.gui.components.BooleanComponent;
+import com.vanphuc.gui.components.ButtonComponent;
 import com.vanphuc.gui.components.KeybindComponent;
 import com.vanphuc.gui.components.SliderComponent;
 import com.vanphuc.module.Module;
-import com.vanphuc.module.settings.BooleanSetting;
-import com.vanphuc.module.settings.KeybindSetting;
-import com.vanphuc.module.settings.NumberSetting;
-import com.vanphuc.module.settings.Setting;
+import com.vanphuc.module.settings.*;
 import net.minecraft.client.gui.DrawContext;
 import org.joml.Matrix4f;
 
@@ -30,7 +28,8 @@ public class SettingsWindow extends Window {
         for (Setting<?> s : module.getSettings()) {
             if (s instanceof BooleanSetting bs) addChild(new BooleanComponent(bs));
             else if (s instanceof NumberSetting ns) addChild(new SliderComponent(ns));
-            else if (s instanceof KeybindSetting ks) addChild(new KeybindComponent(ks)); // Thêm dòng này
+            else if (s instanceof KeybindSetting ks) addChild(new KeybindComponent(ks));
+            else if (s instanceof ActionSetting as) addChild(new ButtonComponent(as));// Thêm dòng này
         }
         super.initialize();
         arrange(position);

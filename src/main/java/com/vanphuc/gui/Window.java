@@ -67,6 +67,11 @@ public class Window extends UIElement {
     }
 
     @Override
+    public boolean onChar(int codePoint, int modifiers) {
+        return super.onChar(codePoint, modifiers);
+    }
+
+    @Override
     public boolean onKey(int key, int action, int mods) {
         return super.onKey(key, action, mods);
     }

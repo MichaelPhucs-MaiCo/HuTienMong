@@ -81,6 +81,16 @@ public abstract class UIElement {
         return false;
     }
 
+    public boolean onChar(int codePoint, int modifiers) {
+        // Duyệt ngược từ trên xuống dưới (để phần tử nào nổi lên trên cùng sẽ nhận phím trước)
+        for (int i = children.size() - 1; i >= 0; i--) {
+            if (children.get(i).onChar(codePoint, modifiers)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Rectangle getPosition() {
         return position;
     }

@@ -167,6 +167,23 @@ public class GuiManager {
         }
     }
 
+    public boolean onChar(int codePoint, int modifiers) {
+        // Nếu GUI đang tắt thì không nhận chữ gõ
+        if (!isOpen) return false;
+
+        // Truyền sự kiện gõ chữ xuống cho các Window đang hiển thị
+        for (int i = windows.size() - 1; i >= 0; i--) {
+            if (windows.get(i).onChar(codePoint, modifiers)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    // Riêng trong GuiManager.java, thêm hàm này để đóng Settings:
+    public void closeSettingsWindows() {
+        windows.removeIf(w -> w instanceof SettingsWindow);
+    }
+
     public boolean isOpen() {
         return isOpen;
     }

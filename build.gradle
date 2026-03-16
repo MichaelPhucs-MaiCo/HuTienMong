@@ -16,9 +16,7 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
-	flatDir {
-		dirs 'libs'
-	}
+
 
 	maven {
 		name = "Wisp Forest"
@@ -28,6 +26,12 @@ repositories {
 		name = "Terraformers"
 		url = "https://maven.terraformersmc.com/"
 	}
+	maven {
+		// use meteor's baritone fork
+		name = "meteor-maven-snapshots"
+		url = "https://maven.meteordev.org/snapshots"
+	}
+
 	maven { url 'https://maven.wispforest.io/releases/' }
 	maven { url 'https://jitpack.io' }
 	mavenCentral()
@@ -60,7 +64,9 @@ dependencies {
 	// Thêm dependency cho GSON
 	modImplementation "com.google.code.gson:gson:2.11.0"
 
-	implementation files('libs/baritone-api-fabric-1.13.1.jar')
+	//modImplementation files("libs/baritone-standalone-fabric-1.13.1.jar")
+	modCompileOnly("meteordevelopment:baritone:${project.baritone_version}-SNAPSHOT") { transitive = false }
+
 }
 
 processResources {
@@ -112,5 +118,9 @@ publishing {
 
 	tasks.withType(Jar).configureEach {
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
+
+	tasks.withType(JavaCompile) {
+		options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
 	}
 }

@@ -13,6 +13,10 @@ public class Modules {
         // Sau này tạo module nào thì đăng ký ở đây
         // add(new Flight());
         add(new AutoClicker());
+        add(new TestRender());
+        add(new TestInventory());
+        add(new TestBaritone());
+        add(new AutoSwitchHotbar());
     }
 
     public static Modules get() {

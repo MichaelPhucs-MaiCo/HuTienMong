@@ -3,19 +3,17 @@ package com.vanphuc.utils;
 import com.google.gson.*;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
-import com.vanphuc.module.settings.BooleanSetting;
-import com.vanphuc.module.settings.KeybindSetting;
-import com.vanphuc.module.settings.ModeSetting;
-import com.vanphuc.module.settings.NumberSetting;
-import com.vanphuc.module.settings.Setting;
+import com.vanphuc.module.settings.*;
+// NHỚ THÊM IMPORT NÀY:
+import com.vanphuc.module.settings.StringListSetting;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigManager {
-    // Dùng GsonBuilder để xuất file JSON có thụt lề cho đẹp mắt, dễ đọc
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    // Lưu thẳng file hutienmong.json vào thư mục config của Minecraft
     private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("hutienmong.json").toFile();
 
     public static void save() {
@@ -40,11 +38,18 @@ public class ConfigManager {
                     keyObj.addProperty("mods", ks.getModifiers());
                     settingsObj.add(setting.getName(), keyObj);
                 }
+                // THÊM ĐOẠN NÀY ĐỂ LƯU LIST XUỐNG JSON 👇
+                else if (setting instanceof StringListSetting sls) {
+                    JsonArray arr = new JsonArray();
+                    for (String s : sls.getValue()) {
+                        arr.add(s);
+                    }
+                    settingsObj.add(setting.getName(), arr);
+                }
             }
             moduleObj.add("settings", settingsObj);
             modulesObj.add(module.name, moduleObj);
         }
-
         root.add("modules", modulesObj);
 
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
@@ -67,12 +72,10 @@ public class ConfigManager {
                 if (modulesObj.has(module.name)) {
                     JsonObject moduleObj = modulesObj.getAsJsonObject(module.name);
 
-                    // Load trạng thái Bật/Tắt của Module
                     if (moduleObj.has("active") && moduleObj.get("active").getAsBoolean()) {
-                        if (!module.isActive()) module.toggle(); // Bật module lên nếu file json ghi là true
+                        if (!module.isActive()) module.toggle();
                     }
 
-                    // Load Settings của Module
                     if (moduleObj.has("settings")) {
                         JsonObject settingsObj = moduleObj.getAsJsonObject("settings");
                         for (Setting<?> setting : module.getSettings()) {
@@ -86,9 +89,16 @@ public class ConfigManager {
                                         ms.setValue(settingsObj.get(setting.getName()).getAsString());
                                     } else if (setting instanceof KeybindSetting ks) {
                                         JsonObject keyObj = settingsObj.getAsJsonObject(setting.getName());
-                                        int key = keyObj.get("key").getAsInt();
-                                        int mods = keyObj.get("mods").getAsInt();
-                                        ks.setKey(key, mods);
+                                        ks.setKey(keyObj.get("key").getAsInt(), keyObj.get("mods").getAsInt());
+                                    }
+                                    // THÊM ĐOẠN NÀY ĐỂ ĐỌC LIST TỪ JSON LÊN 👇
+                                    else if (setting instanceof StringListSetting sls) {
+                                        JsonArray arr = settingsObj.getAsJsonArray(setting.getName());
+                                        List<String> list = new ArrayList<>();
+                                        for (JsonElement e : arr) {
+                                            list.add(e.getAsString());
+                                        }
+                                        sls.setValue(list);
                                     }
                                 } catch (Exception e) {
                                     System.out.println("[Hư Tiên Mộng] Lỗi load setting '" + setting.getName() + "' của module " + module.name);

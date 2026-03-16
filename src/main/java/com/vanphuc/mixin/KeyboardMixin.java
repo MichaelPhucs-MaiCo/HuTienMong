@@ -2,6 +2,7 @@ package com.vanphuc.mixin;
 
 import com.vanphuc.gui.GuiManager;
 import net.minecraft.client.Keyboard;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,14 +17,30 @@ public class KeyboardMixin {
             ci.cancel(); return;
         }
 
-        // Nếu GUI đang mở, hãy cancel phím ESC và GRAVE để tránh mở Menu Minecraft
-        // hoặc bị conflict phím (đã được xử lý trong GuiManager nếu cần)
+        // KHOÁ MỌI PHÍM CỦA MINECRAFT KHI MENU ĐANG MỞ
         if (GuiManager.getInstance().isOpen()) {
-            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE || key == org.lwjgl.glfw.GLFW.GLFW_KEY_GRAVE_ACCENT) {
-                if (action == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
-                    ci.cancel();
-                }
+            // Danh sách phím ĐƯỢC PHÉP hoạt động (W, A, S, D, Space, Shift, Ctrl)
+            boolean isMovementKey = (
+                    key == GLFW.GLFW_KEY_W ||
+                            key == GLFW.GLFW_KEY_A ||
+                            key == GLFW.GLFW_KEY_S ||
+                            key == GLFW.GLFW_KEY_D ||
+                            key == GLFW.GLFW_KEY_SPACE ||
+                            key == GLFW.GLFW_KEY_LEFT_SHIFT ||
+                            key == GLFW.GLFW_KEY_LEFT_CONTROL
+            );
+
+            // Nếu KHÔNG PHẢI phím di chuyển -> Huỷ luôn lệnh, tránh việc bấm 'E' mở túi đồ hay 'L' mở thành tựu
+            if (!isMovementKey) {
+                ci.cancel();
             }
+        }
+    }
+
+    @Inject(method = "onChar", at = @At("HEAD"), cancellable = true)
+    private void onChar(long window, int codePoint, int modifiers, CallbackInfo ci) {
+        if (GuiManager.getInstance().onChar(codePoint, modifiers)) {
+            ci.cancel();
         }
     }
 }

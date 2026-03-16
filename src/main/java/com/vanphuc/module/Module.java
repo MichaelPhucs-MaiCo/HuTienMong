@@ -18,6 +18,7 @@ public abstract class Module {
     private boolean active;
     private final List<Setting<?>> settings = new ArrayList<>();
     public final KeybindSetting keybind = new KeybindSetting("Keybind", -1, this);
+    public void onUpdate() {}
 
     public Module(String name, String description, ItemStack icon) {
         this.name = name;
@@ -62,8 +63,12 @@ public abstract class Module {
     }
 
     protected void info(String message) {
-        if (mc.player != null) {
-            mc.player.sendMessage(Text.of("§7[§bHutienMong§7] §f" + message), false);
-        }
+        // Gọi qua ChatUtils để có format xịn sò hơn
+        com.vanphuc.utils.ChatUtils.info(this, message);
+    }
+
+    // Cậu cũng có thể thêm hàm error để dùng trong module:
+    protected void error(String message) {
+        com.vanphuc.utils.ChatUtils.error(this, message);
     }
 }
