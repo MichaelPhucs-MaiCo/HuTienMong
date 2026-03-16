@@ -1,5 +1,10 @@
 package com.vanphuc.gui;
 
+import com.vanphuc.gui.navigation.NavigationBar;
+import com.vanphuc.gui.navigation.Page;
+import com.vanphuc.gui.navigation.HudWindow;
+import com.vanphuc.gui.navigation.ToggleHudsList;
+import com.vanphuc.gui.navigation.huds.FPSHud;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
 import net.minecraft.client.MinecraftClient;
@@ -13,8 +18,11 @@ public class GuiManager {
     private static GuiManager INSTANCE;
 
     private boolean isOpen = false;
-    private final List<Window> windows = new ArrayList<>();
     private final MinecraftClient mc = MinecraftClient.getInstance();
+
+    public List<Page> pages = new ArrayList<>();
+    public Page activePage;
+    public NavigationBar navigationBar;
 
     public static GuiManager getInstance() {
         if (INSTANCE == null)
@@ -23,19 +31,25 @@ public class GuiManager {
     }
 
     public void initialize() {
-        windows.clear();
+        pages.clear();
+
+        // 1. Setup Navigation Bar
+        navigationBar = new NavigationBar();
+
+        // 2. Setup Page Modules
+        Page modulesPage = new Page("Modules");
+
         int x = 20;
-        int y = 20;
+        int y = 50;
         int windowWidth = 100;
         int windowHeight = 20;
         int spacing = 10;
-
         int screenWidth = mc.getWindow().getScaledWidth();
 
         for (Module module : Modules.get().getAll()) {
             ModuleWindow window = new ModuleWindow(module, new Rectangle(x, y, windowWidth, windowHeight));
             window.initialize();
-            windows.add(window);
+            modulesPage.addWindow(window);
 
             x += windowWidth + spacing;
 
@@ -44,38 +58,78 @@ public class GuiManager {
                 y += windowHeight + spacing + 10;
             }
         }
+
+        // 3. Setup Page Hud
+        Page hudPage = new Page("Hud");
+
+        // Khai báo danh sách các HUD hiện có trong Client
+        List<HudWindow> availableHuds = new ArrayList<>();
+        availableHuds.add(new FPSHud(200, 100)); // Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
+
+        // Khởi tạo Bảng quản lý HUD
+        ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 20, 50, 120, availableHuds);
+        hudPage.addWindow(hudListWindow); // Nhét cái bảng vào trang Hud
+
+        // BẮT BUỘC: Add cả các HudWindow vào trang Hud để nó nhận Event chuột và render khi đang mở ClickGUI
+        for (HudWindow hud : availableHuds) {
+            hudPage.addWindow(hud);
+        }
+
+        pages.add(modulesPage);
+        pages.add(hudPage);
+        activePage = modulesPage; // Mặc định mở lên sẽ ở tab Modules
+
+        // --- QUAN TRỌNG: Nạp config ngay sau khi setup xong GUI ---
+        // Nạp lại tọa độ và trạng thái (Bật/Tắt) của Modules và HUDs từ file JSON
+        com.vanphuc.utils.ConfigManager.load();
     }
 
     public void render(DrawContext context, float partialTicks) {
-        if (!isOpen)
+        // Khi ClickGUI tắt -> Cập nhật đoạn này để nó CHỈ vẽ các HUD đang được BẬT
+        if (!isOpen) {
+            if (pages.size() > 1) { // Đảm bảo pages đã được khởi tạo
+                for (Window w : pages.get(1).windows) { // Lấy hudPage (index 1)
+                    // Kiểm tra nếu là HudWindow và có enabled = true thì mới cho xuất hiện
+                    if (w instanceof HudWindow && ((HudWindow) w).enabled) {
+                        ((HudWindow) w).draw(context, partialTicks);
+                    }
+                }
+            }
             return;
+        }
 
-        com.vanphuc.utils.render.Render2D.drawOverlay(context, mc.getWindow().getScaledWidth(),
-                mc.getWindow().getScaledHeight());
-
+        // Khi ClickGUI mở
+        com.vanphuc.utils.render.Render2D.drawOverlay(context, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight());
         context.getMatrices().push();
         context.getMatrices().translate(0, 0, 500f);
 
-        for (Window window : windows) {
-            window.draw(context, partialTicks);
+        // Vẽ thanh điều hướng
+        if (navigationBar != null) {
+            navigationBar.draw(context);
+        }
+
+        // Vẽ Page hiện tại (nếu đang ở Modules thì vẽ Modules, ở Hud thì vẽ danh sách Hud)
+        if (activePage != null) {
+            activePage.draw(context, partialTicks);
         }
 
         context.getMatrices().pop();
     }
 
     public void addWindow(Window window) {
-        if (windows.contains(window)) {
-            windows.remove(window);
+        if (activePage != null) {
+            activePage.addWindow(window);
         }
-        windows.add(window);
     }
 
     public void removeWindow(Window window) {
-        windows.remove(window);
+        if (activePage != null) {
+            activePage.windows.remove(window);
+        }
     }
 
     public void toggle() {
-        if (windows.isEmpty()) {
+        if (pages.isEmpty()) {
             initialize();
         }
         this.isOpen = !isOpen;
@@ -88,38 +142,37 @@ public class GuiManager {
         }
     }
 
-    // ĐÃ CẬP NHẬT: Thêm tham số mods và logic match keybind
     public boolean onKey(int key, int action, int mods) {
         if (action != GLFW.GLFW_PRESS) return false;
 
         // Nếu GUI đang mở
         if (isOpen) {
-            // Truyền mods xuống Window để KeybindComponent có thể nhận diện tổ hợp phím
-            for (int i = windows.size() - 1; i >= 0; i--) {
-                if (windows.get(i).onKey(key, action, mods)) return true;
-            }
-
-            // Xử lý ESC để đóng Settings hoặc đóng GUI
-            if (key == GLFW.GLFW_KEY_ESCAPE) {
-                for (int i = windows.size() - 1; i >= 0; i--) {
-                    Window window = windows.get(i);
-                    if (window instanceof SettingsWindow sw) {
-                        for (Window w : windows) {
-                            if (w instanceof ModuleWindow mw && mw.getModule().name.equals(sw.getTitle().replace("§l", "").replace(" Settings", ""))) {
-                                mw.closeSettings();
-                                // LƯU KHI ĐÓNG CỬA SỔ SETTING BẰNG ESC 👇
-                                com.vanphuc.utils.ConfigManager.save();
-                                return true;
-                            }
-                        }
-                        removeWindow(window);
-                        // LƯU KHI ĐÓNG WINDOW BẤT KỲ BẰNG ESC 👇
-                        com.vanphuc.utils.ConfigManager.save();
-                        return true;
-                    }
+            if (activePage != null) {
+                // Truyền mods xuống Window để KeybindComponent có thể nhận diện tổ hợp phím
+                for (int i = activePage.windows.size() - 1; i >= 0; i--) {
+                    if (activePage.windows.get(i).onKey(key, action, mods)) return true;
                 }
-                toggle(); // Hàm toggle() bên trên đã có save() rồi nên không cần gọi lại ở đây
-                return true;
+
+                // Xử lý ESC để đóng Settings hoặc đóng GUI
+                if (key == GLFW.GLFW_KEY_ESCAPE) {
+                    for (int i = activePage.windows.size() - 1; i >= 0; i--) {
+                        Window window = activePage.windows.get(i);
+                        if (window instanceof SettingsWindow sw) {
+                            for (Window w : activePage.windows) {
+                                if (w instanceof ModuleWindow mw && mw.getModule().name.equals(sw.getTitle().replace("§l", "").replace(" Settings", ""))) {
+                                    mw.closeSettings();
+                                    com.vanphuc.utils.ConfigManager.save();
+                                    return true;
+                                }
+                            }
+                            activePage.windows.remove(window);
+                            com.vanphuc.utils.ConfigManager.save();
+                            return true;
+                        }
+                    }
+                    toggle();
+                    return true;
+                }
             }
         }
         // Nếu GUI ĐANG ĐÓNG
@@ -130,7 +183,7 @@ public class GuiManager {
                 return true;
             }
 
-            // XỬ LÝ BẬT TẮT MODULE BẰNG PHÍM TẮT (Sử dụng hàm matches mới)
+            // XỬ LÝ BẬT TẮT MODULE BẰNG PHÍM TẮT
             for (Module module : Modules.get().getAll()) {
                 if (module.keybind.matches(key, mods)) {
                     module.toggle();
@@ -141,29 +194,31 @@ public class GuiManager {
     }
 
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
-        if (!isOpen)
-            return false;
+        if (!isOpen) return false;
 
-        List<Window> copy = new ArrayList<>(windows);
-        for (int i = copy.size() - 1; i >= 0; i--) {
-            Window window = copy.get(i);
-            if (window.onMouseClick(mouseX, mouseY, button, pressed)) {
-                if (windows.contains(window)) {
-                    windows.remove(window);
-                    windows.add(window);
-                }
-                return true;
-            }
+        // Check click vào Topbar trước
+        if (pressed && navigationBar != null && navigationBar.onMouseClick(mouseX, mouseY, button)) {
+            return true;
+        }
+
+        // Pass sự kiện xuống Page hiện hành
+        if (activePage != null) {
+            return activePage.onMouseClick(mouseX, mouseY, button, pressed);
         }
         return false;
     }
 
     public void onMouseMove(double mouseX, double mouseY) {
-        if (!isOpen)
-            return;
+        if (!isOpen) return;
+        if (activePage != null) {
+            activePage.onMouseMove(mouseX, mouseY);
+        }
+    }
 
-        for (Window window : windows) {
-            window.onMouseMove(mouseX, mouseY);
+    public void onMouseRelease(double mouseX, double mouseY, int button) {
+        if (!isOpen) return;
+        if (activePage != null) {
+            activePage.onMouseRelease(mouseX, mouseY, button);
         }
     }
 
@@ -171,17 +226,21 @@ public class GuiManager {
         // Nếu GUI đang tắt thì không nhận chữ gõ
         if (!isOpen) return false;
 
-        // Truyền sự kiện gõ chữ xuống cho các Window đang hiển thị
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            if (windows.get(i).onChar(codePoint, modifiers)) {
-                return true;
+        // Truyền sự kiện gõ chữ xuống cho các Window đang hiển thị trong Page hiện hành
+        if (activePage != null) {
+            for (int i = activePage.windows.size() - 1; i >= 0; i--) {
+                if (activePage.windows.get(i).onChar(codePoint, modifiers)) {
+                    return true;
+                }
             }
         }
         return false;
     }
-    // Riêng trong GuiManager.java, thêm hàm này để đóng Settings:
+
     public void closeSettingsWindows() {
-        windows.removeIf(w -> w instanceof SettingsWindow);
+        if (activePage != null) {
+            activePage.windows.removeIf(w -> w instanceof SettingsWindow);
+        }
     }
 
     public boolean isOpen() {

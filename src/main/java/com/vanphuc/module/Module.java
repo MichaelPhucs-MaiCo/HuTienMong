@@ -20,6 +20,9 @@ public abstract class Module {
     public final KeybindSetting keybind = new KeybindSetting("Keybind", -1, this);
     public void onUpdate() {}
 
+    public static boolean showSlotIndex = false;
+
+
     public Module(String name, String description, ItemStack icon) {
         this.name = name;
         this.description = description;

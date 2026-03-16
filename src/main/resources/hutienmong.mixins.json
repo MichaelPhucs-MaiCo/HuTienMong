@@ -4,7 +4,10 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"KeyboardMixin",
-		"MouseMixin"
+		"MouseMixin",
+		"slot_index.SlotIndexMixin",
+		"slot_index.SlotIndexButtonMixin",
+		"slot_index.TooltipSlotMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
