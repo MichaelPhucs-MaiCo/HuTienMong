@@ -34,19 +34,19 @@ public class HudTestTimerHud extends HudWindow {
 
             if (module != null && module.isActive()) {
                 long secs = module.getRemainingSeconds();
-                valueText = secs + "s";
+                valueText = "§l" + secs + "s";
                 // Dưới 10s đỏ, bình thường Xanh Blue Sleek Carbon
                 valueColor = (secs <= 10) ? 0xFFFF5555 : 0xFF0F4C81;
             } else {
-                valueText = "--";
+                valueText = "§l--";
                 valueColor = 0xFF888888;
             }
 
             int renderX = (int) pos.getX() + 6;
             int renderY = (int) pos.getY() + 6; // Giờ thì cứ chốt thẳng ở y + 6 thôi
 
-            context.drawTextWithShadow(MC.textRenderer, "Time: ", renderX, renderY, labelColor);
-            int labelWidth = MC.textRenderer.getWidth("Time: ");
+            context.drawTextWithShadow(MC.textRenderer, "§lTime: ", renderX, renderY, labelColor);
+            int labelWidth = MC.textRenderer.getWidth("§lTime: ");
             context.drawTextWithShadow(MC.textRenderer, valueText, renderX + labelWidth, renderY, valueColor);
         }
     }

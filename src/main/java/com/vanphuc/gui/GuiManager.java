@@ -4,8 +4,7 @@ import com.vanphuc.gui.navigation.NavigationBar;
 import com.vanphuc.gui.navigation.Page;
 import com.vanphuc.gui.navigation.HudWindow;
 import com.vanphuc.gui.navigation.ToggleHudsList;
-import com.vanphuc.gui.navigation.huds.AutoSavePaperHud;
-import com.vanphuc.gui.navigation.huds.FPSHud;
+import com.vanphuc.gui.navigation.huds.*;
 import com.vanphuc.gui.navigation.huds.HudTestTimerHud;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
@@ -69,6 +68,7 @@ public class GuiManager {
         addHuds.add(new FPSHud(200, 100));
         addHuds.add(new HudTestTimerHud(200, 130));// Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
         addHuds.add(new AutoSavePaperHud(200, 160));
+        addHuds.add(new AutoSwitchHotbarHud(200, 190));
 
         // Khởi tạo Bảng quản lý HUD
         ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 20, 50, 120, addHuds);

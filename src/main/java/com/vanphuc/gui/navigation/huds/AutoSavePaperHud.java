@@ -32,24 +32,24 @@ public class AutoSavePaperHud extends HudWindow {
         if (module != null && module.isActive()) {
             long secs = module.getRemainingSeconds(); // <- method must be public in AutoSavePaper
             if (secs < 0) {
-                valueText = "--";
+                valueText = "§l--";
                 valueColor = 0xFF888888;
             } else {
                 long mm = secs / 60;
                 long ss = secs % 60;
-                valueText = String.format("%02d:%02d", mm, ss);
+                valueText = String.format("§l%02d:%02d", mm, ss);
                 valueColor = (secs <= 10) ? 0xFFFF5555 : 0xFF0F4C81;
             }
         } else {
-            valueText = "--";
+            valueText = "§l--";
             valueColor = 0xFF888888;
         }
 
         int renderX = (int) position.getX() + 6;
         int renderY = (int) position.getY() + 6;
 
-        context.drawTextWithShadow(MC.textRenderer, "AutoSavePaper: ", renderX, renderY, 0xFFCCCCCC);
-        int labelWidth = MC.textRenderer.getWidth("AutoSavePaper: ");
+        context.drawTextWithShadow(MC.textRenderer, "§lAutoSavePaper: ", renderX, renderY, 0xFFCCCCCC);
+        int labelWidth = MC.textRenderer.getWidth("§lAutoSavePaper: ");
         context.drawTextWithShadow(MC.textRenderer, valueText, renderX + labelWidth, renderY, valueColor);
     }
 }

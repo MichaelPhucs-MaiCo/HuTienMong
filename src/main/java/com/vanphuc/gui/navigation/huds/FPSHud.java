@@ -24,7 +24,7 @@ public class FPSHud extends HudWindow {
         if (isVisible()) {
             Rectangle pos = position;
             int fps = MC.getCurrentFps();
-            String fpsText = "FPS: " + fps;
+            String fpsText = "§lFPS: " + fps;
 
             int drawX = (int) pos.getX() + 6;
             int drawY = (int) pos.getY() + 6; // Luôn chốt ở y + 6
