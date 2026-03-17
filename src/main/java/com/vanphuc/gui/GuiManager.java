@@ -67,7 +67,7 @@ public class GuiManager {
         // Khai báo danh sách các HUD hiện có trong Client
         List<HudWindow> addHuds = new ArrayList<>();
         addHuds.add(new FPSHud(200, 100));
-        addHuds.add(new HudTestTimerHud(200, 130));// Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
+//        addHuds.add(new HudTestTimerHud(200, 130));// Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
         addHuds.add(new AutoSavePaperHud(200, 160));
         addHuds.add(new AutoSwitchHotbarHud(200, 190));
 
@@ -152,6 +152,10 @@ public class GuiManager {
 
         if (isOpen) {
             mc.mouse.unlockCursor();
+            // FIX Ở ĐÂY: Reset về Page đầu tiên (Modules) mỗi khi ClickGUI được mở lên
+            if (!pages.isEmpty()) {
+                activePage = pages.get(0);
+            }
         } else {
             mc.mouse.lockCursor();
             com.vanphuc.utils.ConfigManager.save();

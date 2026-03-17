@@ -12,14 +12,16 @@ public class Modules {
     public Modules() {
         // Sau này tạo module nào thì đăng ký ở đây
         // add(new Flight());
-        add(new TestRender());
+
+        /*add(new TestRender());
         add(new TestInventory());
         add(new TestBaritone());
-        add(new HudTest());
+        add(new HudTest());*/
 
         add(new AutoClicker());
         add(new AutoSwitchHotbar());
         add(new AutoSavePaper());
+        add(new AutoPickUp());
     }
 
     public static Modules get() {
