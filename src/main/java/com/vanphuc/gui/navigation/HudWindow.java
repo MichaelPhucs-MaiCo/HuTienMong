@@ -4,16 +4,14 @@ import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.Window;
 import net.minecraft.client.gui.DrawContext;
+import org.joml.Matrix4f;
 
 public class HudWindow extends Window {
     public enum ResizeMode { None, WidthAndHeight }
     public ResizeMode resizeMode = ResizeMode.None;
-
     public float minWidth;
     public float minHeight;
     public float maxHeight;
-
-    // Thêm công tắc trạng thái (Mặc định là false - Tắt)
     public boolean enabled = false;
 
     public HudWindow(String title, float x, float y, float width, float height) {
@@ -22,12 +20,13 @@ public class HudWindow extends Window {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
-        // CÚ CHỐT: Nếu HUD đang tắt thì dẹp, không vẽ gì sất!
         if (!enabled) return;
 
-        // Nếu ClickGUI mở và HUD đang BẬT, vẽ viền kéo thả
+        // Khi mở ClickGUI -> Chỉ vẽ Nền và Viền, KHÔNG gọi super.draw() để triệt tiêu Title
         if (GuiManager.getInstance().isOpen()) {
-            super.draw(context, partialTicks);
+            Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
+            com.vanphuc.utils.render.Render2D.drawSmoothRoundedBox(matrix, position.getX(), position.getY(), position.getWidth(), position.getHeight(), 4f, bgColor);
+            com.vanphuc.utils.render.Render2D.drawRoundedOutline(matrix, position.getX(), position.getY(), position.getWidth(), position.getHeight(), 4f, 1f, currentBorderColor);
         }
     }
 
@@ -35,21 +34,18 @@ public class HudWindow extends Window {
         return enabled;
     }
 
-    // Nếu HUD tắt thì khóa luôn tính năng kéo thả
     @Override
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
         if (!enabled) return false;
         boolean handled = super.onMouseClick(mouseX, mouseY, button, pressed);
-
-        // Nếu nhả chuột trái sau khi kéo (pressed == false)
         if (!pressed && button == 0 && isMoving) {
-            com.vanphuc.utils.ConfigManager.save(); // Gọi hàm lưu chung của client
+            com.vanphuc.utils.ConfigManager.save();
         }
         return handled;
     }
 
     public void toggle() {
         this.enabled = !this.enabled;
-        com.vanphuc.utils.ConfigManager.save(); // Lưu ngay khi bật/tắt
+        com.vanphuc.utils.ConfigManager.save();
     }
 }

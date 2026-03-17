@@ -5,6 +5,7 @@ import com.vanphuc.gui.navigation.Page;
 import com.vanphuc.gui.navigation.HudWindow;
 import com.vanphuc.gui.navigation.ToggleHudsList;
 import com.vanphuc.gui.navigation.huds.FPSHud;
+import com.vanphuc.gui.navigation.huds.HudTestTimerHud;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
 import net.minecraft.client.MinecraftClient;
@@ -63,15 +64,16 @@ public class GuiManager {
         Page hudPage = new Page("Hud");
 
         // Khai báo danh sách các HUD hiện có trong Client
-        List<HudWindow> availableHuds = new ArrayList<>();
-        availableHuds.add(new FPSHud(200, 100)); // Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
+        List<HudWindow> addHuds = new ArrayList<>();
+        addHuds.add(new FPSHud(200, 100));
+        addHuds.add(new HudTestTimerHud(200, 130));// Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
 
         // Khởi tạo Bảng quản lý HUD
-        ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 20, 50, 120, availableHuds);
+        ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 20, 50, 120, addHuds);
         hudPage.addWindow(hudListWindow); // Nhét cái bảng vào trang Hud
 
         // BẮT BUỘC: Add cả các HudWindow vào trang Hud để nó nhận Event chuột và render khi đang mở ClickGUI
-        for (HudWindow hud : availableHuds) {
+        for (HudWindow hud : addHuds) {
             hudPage.addWindow(hud);
         }
 

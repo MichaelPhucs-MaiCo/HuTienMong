@@ -17,6 +17,8 @@ public class Modules {
         add(new TestInventory());
         add(new TestBaritone());
         add(new AutoSwitchHotbar());
+
+        add(new HudTest());
     }
 
     public static Modules get() {
