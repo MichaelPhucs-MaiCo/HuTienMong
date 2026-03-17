@@ -73,6 +73,13 @@ public class ConfigManager {
         }
         root.add("huds", hudsObj);
 
+        // --- LƯU DANH SÁCH FRIEND ---
+        JsonArray friendsArray = new JsonArray();
+        for (String f : com.vanphuc.utils.FriendManager.getFriends()) {
+            friendsArray.add(f);
+        }
+        root.add("friends", friendsArray);
+
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
             GSON.toJson(root, writer);
         } catch (IOException e) {
@@ -129,6 +136,16 @@ public class ConfigManager {
                         }
                     }
                 }
+            }
+
+            // --- TẢI DANH SÁCH FRIEND ---
+            if (root.has("friends")) {
+                JsonArray friendsArray = root.getAsJsonArray("friends");
+                List<String> loadedFriends = new ArrayList<>();
+                for (JsonElement e : friendsArray) {
+                    loadedFriends.add(e.getAsString());
+                }
+                com.vanphuc.utils.FriendManager.setFriends(loadedFriends);
             }
 
             // --- TẢI TRẠNG THÁI & TỌA ĐỘ CỦA HUD ---

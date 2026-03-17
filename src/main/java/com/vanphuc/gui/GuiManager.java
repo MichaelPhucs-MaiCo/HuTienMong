@@ -4,6 +4,7 @@ import com.vanphuc.gui.navigation.NavigationBar;
 import com.vanphuc.gui.navigation.Page;
 import com.vanphuc.gui.navigation.HudWindow;
 import com.vanphuc.gui.navigation.ToggleHudsList;
+import com.vanphuc.gui.navigation.friends.FriendWindow;
 import com.vanphuc.gui.navigation.huds.*;
 import com.vanphuc.gui.navigation.huds.HudTestTimerHud;
 import com.vanphuc.module.Module;
@@ -79,8 +80,19 @@ public class GuiManager {
             hudPage.addWindow(hud);
         }
 
+        // 4. Setup Page Friend
+        Page friendPage = new Page("Friend");
+        int friendWidth = 250;
+        int friendHeight = 200;
+        float friendX = (mc.getWindow().getScaledWidth() - friendWidth) / 2f;
+        float friendY = mc.getWindow().getScaledHeight() / 4f;
+
+        FriendWindow friendWindow = new FriendWindow(new Rectangle(friendX, friendY, friendWidth, friendHeight));
+        friendPage.addWindow(friendWindow);
+
         pages.add(modulesPage);
         pages.add(hudPage);
+        pages.add(friendPage);
         activePage = modulesPage; // Mặc định mở lên sẽ ở tab Modules
 
         // --- QUAN TRỌNG: Nạp config ngay sau khi setup xong GUI ---

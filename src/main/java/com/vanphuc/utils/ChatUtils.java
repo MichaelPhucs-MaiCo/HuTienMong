@@ -10,9 +10,10 @@ import net.minecraft.text.Text;
 public class ChatUtils {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private static final String PREFIX = "§7[§bHutienMong§7] §f";
-    private static final String DEBUG_PREFIX = "§7[§aDebug ⚙️§7] §7";
-    private static final String ERROR_PREFIX = "§7[§cBug ❌§7] §f";
+    // Thêm §l để in đậm chữ, §r để reset lại trạng thái bình thường cho phần sau ngoặc
+    private static final String PREFIX = "§7[§b§lHutienMong§r§7] §f";
+    private static final String DEBUG_PREFIX = "§7[§a§lDebug ⚙️§r§7] §7";
+    private static final String ERROR_PREFIX = "§7[§c§lBug ❌§r§7] §f";
 
     // --- HÀM GỬI LỆNH/CHAT ---
     public static void sendPlayerMsg(String message) {
@@ -36,6 +37,11 @@ public class ChatUtils {
         logToChat(PREFIX + message);
     }
 
+    // Hàm bonus: In đậm toàn bộ nội dung tin nhắn luôn 🔥
+    public static void addModMessageBold(String message) {
+        logToChat(PREFIX + "§l" + message);
+    }
+
     public static void error(String message) {
         logToChat(ERROR_PREFIX + message);
     }
@@ -48,12 +54,13 @@ public class ChatUtils {
     // DẠNG 2: LOG THEO MODULE (Sử dụng module.name của Hư Tiên Mộng)
     // ============================================================
     public static void info(Module module, String message) {
-        String modulePrefix = "§7[§b" + module.name + "§7] §f";
+        // Tên module sẽ được in đậm cực cháy
+        String modulePrefix = "§7[§b§l" + module.name + "§r§7] §f";
         logToChat(modulePrefix + message);
     }
 
     public static void error(Module module, String message) {
-        String modulePrefix = "§7[§c" + module.name + " ❌§7] §f";
+        String modulePrefix = "§7[§c§l" + module.name + " ❌§r§7] §f";
         logToChat(modulePrefix + message);
     }
 
@@ -61,7 +68,7 @@ public class ChatUtils {
     // DẠNG 3: DÀNH CHO MIXIN (Prefix tùy biến)
     // ============================================================
     public static void info(String prefixName, String message) {
-        String fullPrefix = "§7[§d" + prefixName + "§7] §f";
+        String fullPrefix = "§7[§d§l" + prefixName + "§r§7] §f";
         logToChat(fullPrefix + message);
     }
 

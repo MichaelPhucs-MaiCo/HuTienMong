@@ -10,11 +10,11 @@ import org.joml.Matrix4f;
 
 public class NavigationBar {
     public Rectangle position;
-    private final float tabWidth = 100f; // Bằng đúng width của module
+    private final float tabWidth = 50f; // Bằng đúng width của module
 
     public NavigationBar() {
-        // Tọa độ y = 10. Width = 200 (cho 2 tab, mỗi tab 100). Height = 20 (bằng height module)
-        this.position = new Rectangle(0, 10, 200, 20);
+        // Tọa độ y = 10. Width = 150 (cho 3 tab, mỗi tab 100). Height = 20
+        this.position = new Rectangle(0, 10, 150, 20);
     }
 
     public void draw(DrawContext context) {
@@ -26,7 +26,7 @@ public class NavigationBar {
         // Background chính Sleek Carbon #121212
         Render2D.drawSmoothRoundedBox(matrix, position.getX(), position.getY(), position.getWidth(), position.getHeight(), 4f, new Color(0xE6121212));
         // Surface/Card #1E1E1E (viền mỏng hơn cho gọn)
-        Render2D.drawSmoothRoundedBox(matrix, position.getX() + 1, position.getY() + 1, position.getWidth() - 2, position.getHeight() - 2, 3f, new Color(0xE61E1E1E));
+        Render2D.drawSmoothRoundedBox(matrix, position.getX() + 1, position.getY() + 1, position.getWidth() - 2, position.getHeight() - 2, 4f, new Color(0xE61E1E1E));
 
         float currentX = position.getX();
         for (Page page : GuiManager.getInstance().pages) {
