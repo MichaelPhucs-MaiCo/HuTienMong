@@ -5,41 +5,76 @@ import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.BooleanSetting;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
-
+import net.minecraft.util.ActionResult;
 
 public class AutoClicker extends Module {
-    private long lastSwingTime = 0L;
+    // Biến lưu thời gian riêng biệt cho 2 hành động
+    private long lastLeftSwingTime = 0L;
+    private long lastRightSwingTime = 0L;
 
-    // Setting giống hệt code mẫu ông gửi
-    public final NumberSetting speedMs = new NumberSetting("Tốc độ (ms)", 310.0, 1.0, 1000.0);
+    // --- CẤU HÌNH CHUỘT TRÁI (Vung ảo lấy sát thương) ---
+    public final BooleanSetting enableLeft = new BooleanSetting("Bật Chuột Trái", true);
+    public final NumberSetting speedLeftMs = new NumberSetting("Delay Trái (ms)", 310.0, 1.0, 1000.0);
+
+    // --- CẤU HÌNH CHUỘT PHẢI (Click thật tung skill) ---
+    public final BooleanSetting enableRight = new BooleanSetting("Bật Chuột Phải", false);
+    // Skill cooldown lâu nên tớ để max là 60000ms (60s), mặc định 30000ms cho skill Thiên Thủ luôn
+    public final NumberSetting speedRightMs = new NumberSetting("Delay Phải (ms)", 30000.0, 1.0, 60000.0);
 
     public AutoClicker() {
-        super("AutoClicker", "Tự động vung tay và chém quái.", Items.GOLDEN_SWORD.getDefaultStack());
-        addSetting(speedMs);
+        super("AutoClicker", "Trái múa quạt ảo, Phải nhấp thật tung skill.", Items.GOLDEN_SWORD.getDefaultStack());
+
+        addSetting(enableLeft);
+        addSetting(speedLeftMs);
+        addSetting(enableRight);
+        addSetting(speedRightMs);
     }
 
     @Override
     public void onDeactivate() {
-        // Khi tắt module phải nhả chuột ra, không là nó cứ chém mãi
+        // Trả lại sự trong sạch cho con chuột khi tắt
         mc.options.attackKey.setPressed(false);
+        mc.options.useKey.setPressed(false);
         super.onDeactivate();
     }
 
+    @Override
     public void onUpdate() {
         if (!isActive() || mc.player == null || mc.currentScreen != null) {
-            if (isActive()) mc.options.attackKey.setPressed(false);
+            if (isActive()) {
+                mc.options.attackKey.setPressed(false);
+                mc.options.useKey.setPressed(false);
+            }
             return;
         }
 
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastSwingTime >= speedMs.getValue().longValue()) {
-            lastSwingTime = currentTime;
 
-            // 1. Vung tay (Giống code mẫu của ông)
-            mc.player.swingHand(Hand.MAIN_HAND);
-        } else {
-            // Nhả chuột ra để chuẩn bị cho lần click sau
-            mc.options.attackKey.setPressed(false);
+        // ================== LOGIC CHUỘT TRÁI (VUNG ẢO MAIN_HAND) ==================
+        if (enableLeft.isEnabled()) {
+            if (currentTime - lastLeftSwingTime >= speedLeftMs.getValue().longValue()) {
+                lastLeftSwingTime = currentTime;
+                // Chỉ vung tay để gây dame ảo, không dùng hàm attack()
+                mc.player.swingHand(Hand.MAIN_HAND);
+            }
+        }
+
+        // ================== LOGIC CHUỘT PHẢI (CLICK THẬT MAIN_HAND) ==================
+        if (enableRight.isEnabled()) {
+            if (currentTime - lastRightSwingTime >= speedRightMs.getValue().longValue()) {
+                lastRightSwingTime = currentTime;
+
+                // Nhấp phải "real" 100% bằng InteractionManager để kích hoạt skill vũ khí
+                if (mc.interactionManager != null) {
+                    ActionResult result = mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+
+                    // Nếu xài skill thành công thì game sẽ tự động vung tay cho hợp logic,
+                    // nhưng nếu muốn chắc kèo có animation thì bật dòng dưới lên
+                    if (result.isAccepted()) {
+                        mc.player.swingHand(Hand.MAIN_HAND);
+                    }
+                }
+            }
         }
     }
 }

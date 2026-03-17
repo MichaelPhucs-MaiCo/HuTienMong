@@ -1,7 +1,7 @@
 package com.vanphuc.module.modules;
 
 import com.vanphuc.gui.GuiManager;
-import com.vanphuc.gui.PickUpNotepadWindow;
+import com.vanphuc.gui.window.PickUpNotepadWindow;
 import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.Module;

@@ -22,6 +22,7 @@ public class Modules {
         add(new AutoSwitchHotbar());
         add(new AutoSavePaper());
         add(new AutoPickUp());
+        add(new FarmCustomMobs());
     }
 
     public static Modules get() {

@@ -1,5 +1,8 @@
-package com.vanphuc.gui;
+package com.vanphuc.gui.window;
 
+import com.vanphuc.gui.GuiManager;
+import com.vanphuc.gui.Rectangle;
+import com.vanphuc.gui.Window;
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.Module;
 import com.vanphuc.utils.render.Render2D;

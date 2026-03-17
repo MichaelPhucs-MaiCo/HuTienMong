@@ -4,7 +4,7 @@ import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.StringListSetting;
 import com.vanphuc.gui.GuiManager;
-import com.vanphuc.gui.NotepadWindow;
+import com.vanphuc.gui.window.NotepadWindow;
 import com.vanphuc.gui.Rectangle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Items;

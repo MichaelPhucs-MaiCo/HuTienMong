@@ -1,7 +1,11 @@
-package com.vanphuc.gui;
+package com.vanphuc.gui.window;
 
+import com.vanphuc.gui.GuiManager;
+import com.vanphuc.gui.Rectangle;
+import com.vanphuc.gui.Window;
 import com.vanphuc.gui.colors.Color;
-import com.vanphuc.module.modules.AutoSwitchHotbar;
+import com.vanphuc.module.modules.AutoPickUp;
+import com.vanphuc.utils.ConfigManager;
 import com.vanphuc.utils.render.Render2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -11,24 +15,23 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NotepadWindow extends Window {
-    private final AutoSwitchHotbar module;
+public class PickUpNotepadWindow extends Window {
+    private final AutoPickUp module;
     private final List<StringBuilder> lines = new ArrayList<>();
-
-    // Vị trí con trỏ hiện tại
     private int cursorLine = 0;
     private int cursorCol = 0;
-
-    // Vị trí bắt đầu bôi đen (Selection)
     private int selectLine = -1;
     private int selectCol = -1;
-
     private boolean isDraggingText = false;
 
-    public NotepadWindow(AutoSwitchHotbar module, Rectangle position) {
-        super("§l" + module.name + " List", position);
+    public PickUpNotepadWindow(AutoPickUp module, Rectangle position) {
+        super("§l" + module.name + " Priority List", position);
         this.module = module;
+        refresh();
+    }
 
+    public void refresh() {
+        lines.clear();
         if (module.getListContent().isEmpty()) {
             lines.add(new StringBuilder());
         } else {
@@ -36,7 +39,6 @@ public class NotepadWindow extends Window {
                 lines.add(new StringBuilder(s));
             }
         }
-        // Đặt con trỏ ở cuối văn bản khi vừa mở
         cursorLine = lines.size() - 1;
         cursorCol = lines.get(cursorLine).length();
     }
@@ -45,38 +47,24 @@ public class NotepadWindow extends Window {
     public void draw(DrawContext context, float partialTicks) {
         this.position.setHeight(Math.max(100f, titleHeight + 16f + (lines.size() * 12f)));
         super.draw(context, partialTicks);
-
         Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
         float startX = position.getX() + 6;
         float startY = position.getY() + titleHeight + 6;
         MinecraftClient mc = MinecraftClient.getInstance();
-
         int[] sel = hasSelection() ? getNormalizedSelection() : null;
 
         for (int i = 0; i < lines.size(); i++) {
             String text = lines.get(i).toString();
             float lineY = startY + (i * 12);
-
-            // 1. Vẽ Vùng Bôi Đen (Màu xanh Blue trong suốt)
             if (sel != null && i >= sel[0] && i <= sel[2]) {
                 int sCol = (i == sel[0]) ? sel[1] : 0;
                 int eCol = (i == sel[2]) ? sel[3] : text.length();
-
                 float x1 = startX + mc.textRenderer.getWidth(text.substring(0, sCol));
                 float x2 = startX + mc.textRenderer.getWidth(text.substring(0, eCol));
-
-                // Nếu không phải dòng cuối cùng của vùng bôi đen, bôi dư ra 4px để tượng trưng cho dấu Enter
-                if (i < sel[2] && eCol == text.length()) {
-                    x2 += 4;
-                }
-
+                if (i < sel[2] && eCol == text.length()) x2 += 4;
                 Render2D.drawBox(matrix, x1, lineY - 1, x2 - x1, 11, new Color(0x663B82F6));
             }
-
-            // 2. Vẽ Text
             Render2D.drawString(context, mc.textRenderer, text, startX, lineY, new Color(0xFFFFFFFF));
-
-            // 3. Vẽ Con trỏ nhấp nháy (Chỉ hiện khi KHÔNG bôi đen)
             if (i == cursorLine && !hasSelection() && (System.currentTimeMillis() / 500) % 2 == 0) {
                 float cx = startX + mc.textRenderer.getWidth(text.substring(0, cursorCol));
                 Render2D.drawBox(matrix, cx, lineY - 1, 1, 10, new Color(0xFFFFFFFF));
@@ -88,7 +76,6 @@ public class NotepadWindow extends Window {
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
         boolean inTitle = mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= position.getY() && mouseY <= position.getY() + titleHeight;
-
         if (button == 0 && pressed && inTitle) {
             isMoving = true;
             lastMouseX = mouseX;
@@ -98,20 +85,14 @@ public class NotepadWindow extends Window {
             isMoving = false;
             isDraggingText = false;
         }
-
         float startX = position.getX() + 6;
         float startY = position.getY() + titleHeight + 6;
-
-        // Click vào vùng Text
-        if (button == 0 && pressed && !inTitle &&
-                mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
+        if (button == 0 && pressed && !inTitle && mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= startY && mouseY <= position.getY() + position.getHeight()) {
-
             updateCursorByMouse(mouseX, mouseY, true);
             isDraggingText = true;
             return true;
         }
-
         return super.onMouseClick(mouseX, mouseY, button, pressed) || inTitle;
     }
 
@@ -124,7 +105,6 @@ public class NotepadWindow extends Window {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
         } else if (isDraggingText) {
-            // Kéo chuột để bôi đen
             updateCursorByMouse(mouseX, mouseY, false);
         }
         super.onMouseMove(mouseX, mouseY);
@@ -133,43 +113,31 @@ public class NotepadWindow extends Window {
     private void updateCursorByMouse(double mouseX, double mouseY, boolean isClick) {
         float startX = position.getX() + 6;
         float startY = position.getY() + titleHeight + 6;
-
         int lineIdx = (int) ((mouseY - startY) / 12);
         lineIdx = Math.max(0, Math.min(lines.size() - 1, lineIdx));
-
         String text = lines.get(lineIdx).toString();
         int colIdx = 0;
         MinecraftClient mc = MinecraftClient.getInstance();
-
         for (int i = 0; i <= text.length(); i++) {
             float w = mc.textRenderer.getWidth(text.substring(0, i));
             if (startX + w >= mouseX) {
                 if (i > 0) {
                     float wPrev = mc.textRenderer.getWidth(text.substring(0, i - 1));
-                    if (mouseX - (startX + wPrev) < (startX + w) - mouseX) {
-                        colIdx = i - 1;
-                        break;
-                    }
+                    if (mouseX - (startX + wPrev) < (startX + w) - mouseX) { colIdx = i - 1; break; }
                 }
                 colIdx = i;
                 break;
             }
             colIdx = text.length();
         }
-
         boolean shift = GLFW.glfwGetKey(mc.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS ||
                 GLFW.glfwGetKey(mc.getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-
         if (isClick && !shift) {
             selectLine = -1;
             selectCol = -1;
         } else {
-            if (!hasSelection() && (shift || isDraggingText)) {
-                selectLine = cursorLine;
-                selectCol = cursorCol;
-            }
+            if (!hasSelection() && (shift || isDraggingText)) { selectLine = cursorLine; selectCol = cursorCol; }
         }
-
         cursorLine = lineIdx;
         cursorCol = colIdx;
     }
@@ -188,58 +156,30 @@ public class NotepadWindow extends Window {
         if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
             if (key == GLFW.GLFW_KEY_ESCAPE) {
                 GuiManager.getInstance().removeWindow(this);
-                com.vanphuc.utils.ConfigManager.save();
+                ConfigManager.save();
                 GuiManager.getInstance().toggle();
                 return true;
             }
-
             MinecraftClient mc = MinecraftClient.getInstance();
             boolean shift = (mods & GLFW.GLFW_MOD_SHIFT) != 0;
             boolean ctrl = (mods & GLFW.GLFW_MOD_CONTROL) != 0;
-
-            // XỬ LÝ TỔ HỢP PHÍM CTRL (COPY, DÁN, CẮT, CHỌN TẤT CẢ)
             if (ctrl) {
-                if (key == GLFW.GLFW_KEY_A) {
-                    selectLine = 0; selectCol = 0;
-                    cursorLine = lines.size() - 1; cursorCol = lines.get(cursorLine).length();
-                    return true;
-                } else if (key == GLFW.GLFW_KEY_C) {
-                    mc.keyboard.setClipboard(getSelectedText());
-                    return true;
-                } else if (key == GLFW.GLFW_KEY_X) {
-                    mc.keyboard.setClipboard(getSelectedText());
-                    deleteSelection();
-                    return true;
-                } else if (key == GLFW.GLFW_KEY_V) {
-                    insertText(mc.keyboard.getClipboard());
-                    return true;
-                }
+                if (key == GLFW.GLFW_KEY_A) { selectLine = 0; selectCol = 0; cursorLine = lines.size() - 1; cursorCol = lines.get(cursorLine).length(); return true; }
+                else if (key == GLFW.GLFW_KEY_C) { mc.keyboard.setClipboard(getSelectedText()); return true; }
+                else if (key == GLFW.GLFW_KEY_X) { mc.keyboard.setClipboard(getSelectedText()); deleteSelection(); return true; }
+                else if (key == GLFW.GLFW_KEY_V) { insertText(mc.keyboard.getClipboard()); return true; }
             }
-
-            // ĐIỀU HƯỚNG BẰNG MŨI TÊN
-            if (key == GLFW.GLFW_KEY_LEFT) {
-                moveCursor(-1, shift); return true;
-            } else if (key == GLFW.GLFW_KEY_RIGHT) {
-                moveCursor(1, shift); return true;
-            } else if (key == GLFW.GLFW_KEY_UP) {
-                moveCursorVertical(-1, shift); return true;
-            } else if (key == GLFW.GLFW_KEY_DOWN) {
-                moveCursorVertical(1, shift); return true;
-            }
-
-            // XÓA (BACKSPACE & DELETE)
+            if (key == GLFW.GLFW_KEY_LEFT) { moveCursor(-1, shift); return true; }
+            else if (key == GLFW.GLFW_KEY_RIGHT) { moveCursor(1, shift); return true; }
+            else if (key == GLFW.GLFW_KEY_UP) { moveCursorVertical(-1, shift); return true; }
+            else if (key == GLFW.GLFW_KEY_DOWN) { moveCursorVertical(1, shift); return true; }
             if (key == GLFW.GLFW_KEY_BACKSPACE) {
-                if (hasSelection()) {
-                    deleteSelection();
-                } else {
-                    if (cursorCol > 0) {
-                        lines.get(cursorLine).deleteCharAt(cursorCol - 1);
-                        cursorCol--;
-                        saveData();
-                    } else if (cursorLine > 0) {
+                if (hasSelection()) { deleteSelection(); }
+                else {
+                    if (cursorCol > 0) { lines.get(cursorLine).deleteCharAt(cursorCol - 1); cursorCol--; saveData(); }
+                    else if (cursorLine > 0) {
                         String rem = lines.get(cursorLine).toString();
-                        lines.remove(cursorLine);
-                        cursorLine--;
+                        lines.remove(cursorLine); cursorLine--;
                         cursorCol = lines.get(cursorLine).length();
                         lines.get(cursorLine).append(rem);
                         saveData();
@@ -247,17 +187,12 @@ public class NotepadWindow extends Window {
                 }
                 return true;
             } else if (key == GLFW.GLFW_KEY_DELETE) {
-                if (hasSelection()) {
-                    deleteSelection();
-                } else {
-                    if (cursorCol < lines.get(cursorLine).length()) {
-                        lines.get(cursorLine).deleteCharAt(cursorCol);
-                        saveData();
-                    } else if (cursorLine < lines.size() - 1) {
+                if (hasSelection()) { deleteSelection(); }
+                else {
+                    if (cursorCol < lines.get(cursorLine).length()) { lines.get(cursorLine).deleteCharAt(cursorCol); saveData(); }
+                    else if (cursorLine < lines.size() - 1) {
                         String rem = lines.get(cursorLine + 1).toString();
-                        lines.remove(cursorLine + 1);
-                        lines.get(cursorLine).append(rem);
-                        saveData();
+                        lines.remove(cursorLine + 1); lines.get(cursorLine).append(rem); saveData();
                     }
                 }
                 return true;
@@ -265,8 +200,7 @@ public class NotepadWindow extends Window {
                 if (hasSelection()) deleteSelection();
                 String rem = lines.get(cursorLine).substring(cursorCol);
                 lines.get(cursorLine).setLength(cursorCol);
-                cursorLine++;
-                cursorCol = 0;
+                cursorLine++; cursorCol = 0;
                 lines.add(cursorLine, new StringBuilder(rem));
                 saveData();
                 return true;
@@ -275,15 +209,9 @@ public class NotepadWindow extends Window {
         return super.onKey(key, action, mods);
     }
 
-    // --- CÁC HÀM XỬ LÝ TEXT LOGIC BÊN TRONG ---
-
     private void moveCursor(int offset, boolean shift) {
-        if (shift && !hasSelection()) {
-            selectLine = cursorLine; selectCol = cursorCol;
-        } else if (!shift && hasSelection()) {
-            selectLine = -1; selectCol = -1;
-        }
-
+        if (shift && !hasSelection()) { selectLine = cursorLine; selectCol = cursorCol; }
+        else if (!shift && hasSelection()) { selectLine = -1; selectCol = -1; }
         if (offset == -1) {
             if (cursorCol > 0) cursorCol--;
             else if (cursorLine > 0) { cursorLine--; cursorCol = lines.get(cursorLine).length(); }
@@ -294,40 +222,24 @@ public class NotepadWindow extends Window {
     }
 
     private void moveCursorVertical(int offset, boolean shift) {
-        if (shift && !hasSelection()) {
-            selectLine = cursorLine; selectCol = cursorCol;
-        } else if (!shift && hasSelection()) {
-            selectLine = -1; selectCol = -1;
-        }
-
-        if (offset == -1 && cursorLine > 0) {
-            cursorLine--;
-            cursorCol = Math.min(cursorCol, lines.get(cursorLine).length());
-        } else if (offset == 1 && cursorLine < lines.size() - 1) {
-            cursorLine++;
-            cursorCol = Math.min(cursorCol, lines.get(cursorLine).length());
-        }
+        if (shift && !hasSelection()) { selectLine = cursorLine; selectCol = cursorCol; }
+        else if (!shift && hasSelection()) { selectLine = -1; selectCol = -1; }
+        if (offset == -1 && cursorLine > 0) { cursorLine--; cursorCol = Math.min(cursorCol, lines.get(cursorLine).length()); }
+        else if (offset == 1 && cursorLine < lines.size() - 1) { cursorLine++; cursorCol = Math.min(cursorCol, lines.get(cursorLine).length()); }
     }
 
-    private boolean hasSelection() {
-        return selectLine != -1 && (selectLine != cursorLine || selectCol != cursorCol);
-    }
+    private boolean hasSelection() { return selectLine != -1 && (selectLine != cursorLine || selectCol != cursorCol); }
 
     private int[] getNormalizedSelection() {
-        if (selectLine < cursorLine || (selectLine == cursorLine && selectCol < cursorCol)) {
-            return new int[]{selectLine, selectCol, cursorLine, cursorCol};
-        } else {
-            return new int[]{cursorLine, cursorCol, selectLine, selectCol};
-        }
+        if (selectLine < cursorLine || (selectLine == cursorLine && selectCol < cursorCol)) return new int[]{selectLine, selectCol, cursorLine, cursorCol};
+        else return new int[]{cursorLine, cursorCol, selectLine, selectCol};
     }
 
     private String getSelectedText() {
         if (!hasSelection()) return "";
         int[] sel = getNormalizedSelection();
         int sl = sel[0], sc = sel[1], el = sel[2], ec = sel[3];
-
         if (sl == el) return lines.get(sl).substring(sc, ec);
-
         StringBuilder sb = new StringBuilder();
         sb.append(lines.get(sl).substring(sc)).append("\n");
         for (int i = sl + 1; i < el; i++) sb.append(lines.get(i)).append("\n");
@@ -339,22 +251,16 @@ public class NotepadWindow extends Window {
         if (!hasSelection()) return;
         int[] sel = getNormalizedSelection();
         int sl = sel[0], sc = sel[1], el = sel[2], ec = sel[3];
-
         StringBuilder startStr = new StringBuilder(lines.get(sl).substring(0, sc));
         String endStr = lines.get(el).substring(ec);
-
         for (int i = el; i > sl; i--) lines.remove(i);
-
         lines.set(sl, startStr.append(endStr));
-        cursorLine = sl; cursorCol = sc;
-        selectLine = -1; selectCol = -1;
+        cursorLine = sl; cursorCol = sc; selectLine = -1; selectCol = -1;
         saveData();
     }
 
     private void insertText(String str) {
         if (hasSelection()) deleteSelection();
-
-        // Xử lý các dấu xuống dòng khi copy từ bên ngoài vào
         String[] parts = str.replace("\r", "").split("\n", -1);
         if (parts.length == 1) {
             lines.get(cursorLine).insert(cursorCol, parts[0]);
@@ -363,14 +269,8 @@ public class NotepadWindow extends Window {
             String remainder = lines.get(cursorLine).substring(cursorCol);
             lines.get(cursorLine).setLength(cursorCol);
             lines.get(cursorLine).append(parts[0]);
-
-            for (int i = 1; i < parts.length - 1; i++) {
-                cursorLine++;
-                lines.add(cursorLine, new StringBuilder(parts[i]));
-            }
-
-            cursorLine++;
-            lines.add(cursorLine, new StringBuilder(parts[parts.length - 1]).append(remainder));
+            for (int i = 1; i < parts.length - 1; i++) { cursorLine++; lines.add(cursorLine, new StringBuilder(parts[i])); }
+            cursorLine++; lines.add(cursorLine, new StringBuilder(parts[parts.length - 1]).append(remainder));
             cursorCol = parts[parts.length - 1].length();
         }
         saveData();
@@ -378,8 +278,10 @@ public class NotepadWindow extends Window {
 
     private void saveData() {
         List<String> saved = new ArrayList<>();
-        for (StringBuilder sb : lines) saved.add(sb.toString());
+        for (StringBuilder sb : lines) {
+            if (!sb.toString().trim().isEmpty()) saved.add(sb.toString().trim());
+        }
         module.updateList(saved);
-        com.vanphuc.utils.ConfigManager.save();
+        ConfigManager.save();
     }
 }

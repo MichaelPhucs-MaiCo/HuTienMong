@@ -1,5 +1,9 @@
-package com.vanphuc.gui;
+package com.vanphuc.gui.window;
 
+import com.vanphuc.gui.Rectangle;
+import com.vanphuc.gui.Size;
+import com.vanphuc.gui.UIElement;
+import com.vanphuc.gui.Window;
 import com.vanphuc.gui.components.BooleanComponent;
 import com.vanphuc.gui.components.ButtonComponent;
 import com.vanphuc.gui.components.KeybindComponent;
