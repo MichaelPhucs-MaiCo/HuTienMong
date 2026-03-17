@@ -243,6 +243,14 @@ public class GuiManager {
 
     public void closeSettingsWindows() {
         if (activePage != null) {
+            // Tạo một list copy để duyệt, tránh lỗi Crash (ConcurrentModificationException) khi xóa phần tử
+            List<Window> copyList = new ArrayList<>(activePage.windows);
+            for (Window w : copyList) {
+                if (w instanceof ModuleWindow mw) {
+                    mw.closeSettings(); // Bắt ModuleWindow tự dọn dẹp SettingsWindow của nó
+                }
+            }
+            // Dự phòng dọn rác nốt nếu còn kẹt
             activePage.windows.removeIf(w -> w instanceof SettingsWindow);
         }
     }

@@ -26,7 +26,7 @@ import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import java.util.*;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
-public class AutoSavePaper extends Module {
+    public class AutoSavePaper extends Module {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     // Settings
@@ -42,20 +42,33 @@ public class AutoSavePaper extends Module {
     private long delayTimer = 0L;
     private final Set<String> visitedVaultItemKeys = new HashSet<>();
 
-    public AutoSavePaper() {
-        super("AutoSavePaper", "Auto deposit & auto trash helper (port from AutoSavePaperMod).");
+        public AutoSavePaper() {
+            // Thêm Items.PAPER.getDefaultStack() vào đây để nó hiện icon Tờ Giấy nhé
+            super("AutoSavePaper", "Auto deposit & auto trash helper (port from AutoSavePaperMod).", Items.PAPER.getDefaultStack());
 
-        openListSetting = new ActionSetting("Trash List", () -> {
-            GuiManager.getInstance().closeSettingsWindows();
-            float x = (mc.getWindow().getScaledWidth() - 300) / 2f;
-            float y = mc.getWindow().getScaledHeight() / 3f;
-            GuiManager.getInstance().addWindow(new TrashNotepadWindow(this, new Rectangle(x, y, 300, 150)));
-        });
+            openListSetting = new ActionSetting("Trash List", () -> {
+                GuiManager.getInstance().closeSettingsWindows();
+
+                // XÓA CỬA SỔ CŨ ĐỂ KHÔNG BỊ SPAM NHIỀU CỬA SỔ CÙNG LÚC
+                if (GuiManager.getInstance().activePage != null) {
+                    GuiManager.getInstance().activePage.windows.removeIf(w -> w instanceof TrashNotepadWindow);
+                }
+
+                float x = (mc.getWindow().getScaledWidth() - 300) / 2f;
+                float y = mc.getWindow().getScaledHeight() / 3f;
+                GuiManager.getInstance().addWindow(new TrashNotepadWindow(this, new Rectangle(x, y, 300, 150)));
+            });
 
         clearTrashSetting = new ActionSetting("Clear Trash", () -> {
             trashListSetting.getValue().clear();
             cycleState = CycleState.IDLE;
             ChatUtils.info(this, "Đã xóa toàn bộ danh sách rác. Hệ thống Auto-Trash đã TẮT hoàn toàn.");
+            // Cập nhật lại UI nếu đang mở
+            if (GuiManager.getInstance().activePage != null) {
+                for (com.vanphuc.gui.Window w : GuiManager.getInstance().activePage.windows) {
+                    if (w instanceof TrashNotepadWindow tnw) tnw.refresh();
+                }
+            }
         });
 
         addSetting(openListSetting);
@@ -63,7 +76,6 @@ public class AutoSavePaper extends Module {
         addSetting(clearTrashSetting);
         addSetting(saveTimeMinutes);
 
-        // Register commands: keep /mItem trash add and /mItem trash list -> open Notepad
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandManager.literal("mItem")
                     .then(ClientCommandManager.literal("trash")
@@ -77,6 +89,15 @@ public class AutoSavePaper extends Module {
                                         if (!list.contains(itemKey)) {
                                             list.add(itemKey);
                                             trashListSetting.setValue(list);
+
+                                            // LÀM MỚI GIAO DIỆN NGAY LẬP TỨC
+                                            if (GuiManager.getInstance().activePage != null) {
+                                                for (com.vanphuc.gui.Window w : GuiManager.getInstance().activePage.windows) {
+                                                    if (w instanceof TrashNotepadWindow tnw) {
+                                                        tnw.refresh();
+                                                    }
+                                                }
+                                            }
                                         }
                                         if (trashListSetting.getValue().size() == 1) {
                                             nextCycleTime = System.currentTimeMillis() + (long)(saveTimeMinutes.getValue().doubleValue() * 60.0 * 1000.0);

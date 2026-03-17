@@ -28,9 +28,12 @@ public class Page {
         for (int i = windows.size() - 1; i >= 0; i--) {
             Window window = windows.get(i);
             if (window.onMouseClick(mouseX, mouseY, button, pressed)) {
-                // Focus: Đưa window vừa click lên đầu danh sách render
-                windows.remove(window);
-                windows.add(window);
+                // CHỐNG HỒI SINH: Chỉ focus (đưa lên đầu) nếu window đó CHƯA bị xóa
+                // (Ví dụ click vào nút tắt Settings thì window đã bị xóa khỏi list rồi, không add lại nữa)
+                if (windows.contains(window)) {
+                    windows.remove(window);
+                    windows.add(window);
+                }
                 return true;
             }
         }

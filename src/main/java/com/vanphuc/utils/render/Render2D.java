@@ -16,17 +16,17 @@ public class Render2D {
      * PHƯƠNG THỨC SIÊU MỊN: Vẽ 3 lớp layer (AA + Blur) để đạt độ mượt như Aoba-Client.
      */
     public static void drawSmoothRoundedBox(Matrix4f matrix, float x, float y, float width, float height, float radius, Color color) {
+        // CHẶN CRASH: Nếu width hoặc height <= 0 thì hủy vẽ luôn, khỏi lỗi BufferBuilder
+        if (width <= 0 || height <= 0) return;
+
         int packed = color.getColorAsInt();
         int r = (packed >> 16) & 0xFF;
         int g = (packed >> 8)  & 0xFF;
         int b = (packed)       & 0xFF;
         int a = (packed >> 24) & 0xFF;
 
-        // Vẽ 2 lớp shadow/blur siêu mỏng ở rìa để làm mịn cạnh (Anti-Aliasing)
         drawRoundedBoxInternal(matrix, x - 0.8f, y - 0.8f, width + 1.6f, height + 1.6f, radius + 0.8f, pack(r, g, b, (int)(a * 0.3f)));
         drawRoundedBoxInternal(matrix, x - 0.4f, y - 0.4f, width + 0.8f, height + 0.8f, radius + 0.4f, pack(r, g, b, (int)(a * 0.6f)));
-
-        // Vẽ lớp chính
         drawRoundedBoxInternal(matrix, x, y, width, height, radius, packed);
     }
 
@@ -74,7 +74,7 @@ public class Render2D {
 
     // Các hàm phụ trợ tối ưu
     private static void addQuad(BufferBuilder b, Matrix4f m, float x, float y, float w, float h, int c) {
-        if (w <= 0 || h <= 0) return;
+        // ĐÃ XÓA check return sớm ở đây để đảm bảo buffer LUÔN có dữ liệu
         b.vertex(m, x, y, 0).color(c); b.vertex(m, x, y+h, 0).color(c); b.vertex(m, x+w, y+h, 0).color(c);
         b.vertex(m, x, y, 0).color(c); b.vertex(m, x+w, y+h, 0).color(c); b.vertex(m, x+w, y, 0).color(c);
     }

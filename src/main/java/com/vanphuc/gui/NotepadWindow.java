@@ -189,6 +189,7 @@ public class NotepadWindow extends Window {
             if (key == GLFW.GLFW_KEY_ESCAPE) {
                 GuiManager.getInstance().removeWindow(this);
                 com.vanphuc.utils.ConfigManager.save();
+                GuiManager.getInstance().toggle();
                 return true;
             }
 
