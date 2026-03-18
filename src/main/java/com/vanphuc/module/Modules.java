@@ -23,6 +23,7 @@ public class Modules {
         add(new AutoSavePaper());
         add(new AutoPickUp());
         add(new FarmCustomMobs());
+        add(new CopyDataComp());
     }
 
     public static Modules get() {
