@@ -1,9 +1,6 @@
 package com.vanphuc.gui;
 
-import com.vanphuc.gui.navigation.NavigationBar;
-import com.vanphuc.gui.navigation.Page;
-import com.vanphuc.gui.navigation.HudWindow;
-import com.vanphuc.gui.navigation.ToggleHudsList;
+import com.vanphuc.gui.navigation.*;
 import com.vanphuc.gui.navigation.friends.FriendWindow;
 import com.vanphuc.gui.navigation.huds.*;
 import com.vanphuc.gui.window.ModuleWindow;
@@ -35,31 +32,29 @@ public class GuiManager {
 
     public void initialize() {
         pages.clear();
-
-        // 1. Setup Navigation Bar
         navigationBar = new NavigationBar();
 
         // 2. Setup Page Modules
         Page modulesPage = new Page("Modules");
 
-        int x = 20;
-        int y = 50;
-        int windowWidth = 100;
-        int windowHeight = 20;
-        int spacing = 10;
-        int screenWidth = mc.getWindow().getScaledWidth();
+        List<ModuleWindow> moduleWindows = new ArrayList<>();
+        int defaultX = 200;
+        int defaultY = 50;
 
+        // Khởi tạo các ModuleWindow (Mặc định sẽ ẩn)
         for (Module module : Modules.get().getAll()) {
-            ModuleWindow window = new ModuleWindow(module, new Rectangle(x, y, windowWidth, windowHeight));
+            ModuleWindow window = new ModuleWindow(module, new Rectangle(defaultX, defaultY, 120, 20));
             window.initialize();
-            modulesPage.addWindow(window);
+            moduleWindows.add(window);
+        }
 
-            x += windowWidth + spacing;
+        // Tạo bảng quản lý Modules
+        ToggleModulesList modulesListWindow = new ToggleModulesList("Modules Manager", 420, 150, 150, moduleWindows);
+        modulesPage.addWindow(modulesListWindow);
 
-            if (x + windowWidth > screenWidth - 20) {
-                x = 20;
-                y += windowHeight + spacing + 10;
-            }
+        // Bắt buộc add các ModuleWindow vào page để nó nhận event (tàng hình hay không do nó tự quyết định)
+        for (ModuleWindow mw : moduleWindows) {
+            modulesPage.addWindow(mw);
         }
 
         // 3. Setup Page Hud

@@ -12,6 +12,7 @@ import net.minecraft.client.gui.DrawContext;
 public class ModuleWindow extends Window {
     private final Module module;
     private SettingsWindow settingsWindow;
+    public boolean showInGui = false; // Thêm dòng này
 
     public ModuleWindow(Module module, Rectangle position) {
         super(module.name, position);
@@ -20,14 +21,14 @@ public class ModuleWindow extends Window {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
-        // ĐÃ SỬA: Đổi màu viền dựa vào trạng thái Module (Bật = Xanh Lá, Tắt = Xanh Blue)
+        if (!showInGui) return; // Nếu không add ra màn hình thì tàng hình
+
         if (module.isActive()) {
-            this.currentBorderColor = new Color(0xFF2ECC71); // Màu Xanh Lá (Emerald Green)
+            this.currentBorderColor = new Color(0xFF2ECC71);
         } else {
-            this.currentBorderColor = new Color(0xFF3B82F6); // Màu Xanh Blue mặc định
+            this.currentBorderColor = new Color(0xFF3B82F6);
         }
 
-        // Vẽ Window cơ bản
         super.draw(context, partialTicks);
 
         if (module.icon != null) {
@@ -35,16 +36,17 @@ public class ModuleWindow extends Window {
                     (int) (position.getX() + position.getWidth() - 20),
                     (int) (position.getY() + 2));
         }
-
         if (module.isActive()) {
             Render2D.drawString(context, MinecraftClient.getInstance().textRenderer, "*",
                     position.getX() + position.getWidth() - 28, position.getY() + 5,
-                    this.currentBorderColor); // Dấu sao cũng màu xanh lá luôn cho tông xuyệt tông
+                    this.currentBorderColor);
         }
     }
 
     @Override
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
+        if (!showInGui) return false; // Không nhận click nếu đang ẩn
+
         boolean inHeader = mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= position.getY() && mouseY <= position.getY() + titleHeight;
 
@@ -69,6 +71,7 @@ public class ModuleWindow extends Window {
             } else {
                 if (isMoving) {
                     isMoving = false;
+                    com.vanphuc.utils.ConfigManager.save(); // Lưu lại tọa độ khi thả chuột
                     return true;
                 }
             }
@@ -77,6 +80,13 @@ public class ModuleWindow extends Window {
         return super.onMouseClick(mouseX, mouseY, button, pressed);
     }
 
+    @Override
+    public void onMouseMove(double mouseX, double mouseY) {
+        if (!showInGui) return;
+        super.onMouseMove(mouseX, mouseY);
+    }
+
+    // Các hàm còn lại (toggleSettings, closeSettings, getModule) giữ nguyên như cũ...
     private void toggleSettings() {
         if (settingsWindow == null) {
             MinecraftClient mc = MinecraftClient.getInstance();

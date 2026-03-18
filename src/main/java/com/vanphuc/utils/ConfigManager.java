@@ -28,6 +28,17 @@ public class ConfigManager {
             JsonObject moduleObj = new JsonObject();
             moduleObj.addProperty("active", module.isActive());
 
+            if (GuiManager.getInstance().pages != null && !GuiManager.getInstance().pages.isEmpty()) {
+                for (Window window : GuiManager.getInstance().pages.get(0).windows) {
+                    if (window instanceof com.vanphuc.gui.window.ModuleWindow mw && mw.getModule() == module) {
+                        moduleObj.addProperty("showInGui", mw.showInGui);
+                        moduleObj.addProperty("guiX", mw.getPosition().getX());
+                        moduleObj.addProperty("guiY", mw.getPosition().getY());
+                        break;
+                    }
+                }
+            }
+
             JsonObject settingsObj = new JsonObject();
             for (Setting<?> setting : module.getSettings()) {
                 if (setting instanceof BooleanSetting bs) {
@@ -42,6 +53,7 @@ public class ConfigManager {
                     keyObj.addProperty("mods", ks.getModifiers());
                     settingsObj.add(setting.getName(), keyObj);
                 }
+
                 else if (setting instanceof StringListSetting sls) {
                     JsonArray arr = new JsonArray();
                     for (String s : sls.getValue()) {
@@ -103,6 +115,16 @@ public class ConfigManager {
 
                         if (moduleObj.has("active") && moduleObj.get("active").getAsBoolean()) {
                             if (!module.isActive()) module.toggle();
+                        }
+                        if (GuiManager.getInstance().pages != null && !GuiManager.getInstance().pages.isEmpty()) {
+                            for (Window window : GuiManager.getInstance().pages.get(0).windows) {
+                                if (window instanceof com.vanphuc.gui.window.ModuleWindow mw && mw.getModule() == module) {
+                                    if (moduleObj.has("showInGui")) mw.showInGui = moduleObj.get("showInGui").getAsBoolean();
+                                    if (moduleObj.has("guiX")) mw.getPosition().setX(moduleObj.get("guiX").getAsFloat());
+                                    if (moduleObj.has("guiY")) mw.getPosition().setY(moduleObj.get("guiY").getAsFloat());
+                                    break;
+                                }
+                            }
                         }
 
                         if (moduleObj.has("settings")) {
