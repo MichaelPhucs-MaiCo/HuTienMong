@@ -8,7 +8,8 @@
 		"slot_index.SlotIndexMixin",
 		"slot_index.SlotIndexButtonMixin",
 		"slot_index.TooltipSlotMixin",
-		"CopyDataCompMixin"
+		"CopyDataCompMixin",
+		"BossBarHudAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

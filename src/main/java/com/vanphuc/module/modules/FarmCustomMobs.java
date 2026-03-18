@@ -2,8 +2,9 @@ package com.vanphuc.module.modules;
 
 import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Rectangle;
-import com.vanphuc.gui.window.FarmMobsNotepadWindow;
+
 import com.vanphuc.gui.colors.Color;
+import com.vanphuc.gui.window.FarmMobsNotepadWindow;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.BooleanSetting;
@@ -15,6 +16,7 @@ import com.vanphuc.utils.render.RenderWorldUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,6 +24,7 @@ import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.Items;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -35,6 +38,8 @@ public class FarmCustomMobs extends Module {
     public final NumberSetting maintainDistance = new NumberSetting("Khoảng cách đánh", 2.0, 0.5, 6.0);
     public final NumberSetting playerDetectRadius = new NumberSetting("Phạm vi radar né", 150.0, 10.0, 300.0);
     public final BooleanSetting useWhitelist = new BooleanSetting("Né người lạ (Friend)", true);
+    public final BooleanSetting enableKiting = new BooleanSetting("Thả diều (Bunny Hop lùi)", true);
+    public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm khi rảnh", false);
 
     public final StringListSetting targetListSetting = new StringListSetting("TargetList", new ArrayList<>());
 
@@ -75,6 +80,8 @@ public class FarmCustomMobs extends Module {
         addSetting(maintainDistance);
         addSetting(playerDetectRadius);
         addSetting(useWhitelist);
+        addSetting(enableKiting);
+        addSetting(returnToAnchor);
         addSetting(openListSetting);
         addSetting(clearListSetting);
         addSetting(targetListSetting);
@@ -160,19 +167,20 @@ public class FarmCustomMobs extends Module {
 
     @Override
     public void onDeactivate() {
+        BaritoneHelper.stop();
+        stopManualMovement();
         setState(State.IDLE);
         this.anchorPos = null;
         super.onDeactivate();
     }
 
-    // --- HỆ THỐNG KIỂM SOÁT STATE (SỬA LỖI KHÓA DI CHUYỂN) ---
     private void setState(State newState) {
         if (this.state == newState) return;
         this.state = newState;
 
-        // Khi chuyển về các state rảnh rỗi, chỉ gọi nhả phím ĐÚNG 1 LẦN để ông có thể tự do WASD
         if (newState == State.SCANNING || newState == State.WAIT_AFTER_STRANGER ||
-                newState == State.WAIT_FOR_STRANGER || newState == State.IDLE || newState == State.WAIT_PICKUP) {
+                newState == State.WAIT_FOR_STRANGER || newState == State.IDLE ||
+                newState == State.WAIT_PICKUP || newState == State.RETURN_ANCHOR) {
             BaritoneHelper.stop();
             resetMovementKeys();
         }
@@ -225,6 +233,28 @@ public class FarmCustomMobs extends Module {
                 currentTargetEntity = findEntityByHitbox(anchorPos);
                 if (currentTargetEntity != null) {
                     setState(State.CHASE_TARGET);
+                    return;
+                }
+
+                // Rảnh rỗi không có gì làm -> Check xem có cần lùi về tâm không
+                if (returnToAnchor.isEnabled() && mc.player.squaredDistanceTo(anchorPos) > 4.0) {
+                    setState(State.RETURN_ANCHOR);
+                }
+            }
+            case RETURN_ANCHOR -> {
+                if (!returnToAnchor.isEnabled() || mc.player.squaredDistanceTo(anchorPos) <= 4.0) {
+                    setState(State.SCANNING);
+                    return;
+                }
+
+                // Nếu đang trên đường về tâm mà thấy đồ hoặc quái spawn ra thì quất luôn
+                if (findLootEntity(anchorPos, mc.player.getPos()) != null || findEntityByHitbox(anchorPos) != null) {
+                    setState(State.SCANNING);
+                    return;
+                }
+
+                if (!BaritoneHelper.isPathing()) {
+                    BaritoneHelper.goTo(BlockPos.ofFloored(anchorPos.x, anchorPos.y, anchorPos.z));
                 }
             }
             case CHASE_TARGET -> {
@@ -252,19 +282,16 @@ public class FarmCustomMobs extends Module {
                 }
 
                 double dist = mc.player.distanceTo(currentTargetEntity);
-                lookAtEntity(currentTargetEntity); // Luôn xoay mặt theo dõi quái
+                lookAtEntity(currentTargetEntity);
 
-                // Quái chạy ra xa -> Trả lại cho Baritone dí theo
                 if (dist > maintainDistance.getValue() + 1.5) {
                     resetMovementKeys();
                     setState(State.CHASE_TARGET);
                 }
-                // QUÁI ÁP SÁT -> BUNNY HOP THẢ DIỀU (Vừa đi lùi vừa nhảy)
-                else if (dist < maintainDistance.getValue() - 0.5) {
+                else if (enableKiting.isEnabled() && dist < maintainDistance.getValue() - 0.5) {
                     mc.options.backKey.setPressed(true);
-                    mc.options.jumpKey.setPressed(true); // Gắn động cơ phản lực cho đít =)))
+                    mc.options.jumpKey.setPressed(true);
                 }
-                // KHOẢNG CÁCH LÝ TƯỞNG -> Đứng im, nhả mọi phím để quạt Kiếm Khí
                 else {
                     mc.options.backKey.setPressed(false);
                     mc.options.jumpKey.setPressed(false);
@@ -292,6 +319,15 @@ public class FarmCustomMobs extends Module {
             case WAIT_PICKUP -> {
                 if (--timer <= 0) setState(State.SCANNING);
             }
+        }
+    }
+
+    private void stopManualMovement() {
+        if (mc.options != null) {
+            mc.options.forwardKey.setPressed(false);
+            mc.options.backKey.setPressed(false);
+            mc.options.leftKey.setPressed(false);
+            mc.options.rightKey.setPressed(false);
         }
     }
 
@@ -437,7 +473,7 @@ public class FarmCustomMobs extends Module {
         return false;
     }
 
-    private enum State { IDLE, SCANNING, CHASE_TARGET, WAIT_DEATH, GOTO_LOOT, WAIT_PICKUP, WAIT_FOR_STRANGER, WAIT_AFTER_STRANGER }
+    private enum State { IDLE, SCANNING, CHASE_TARGET, WAIT_DEATH, GOTO_LOOT, WAIT_PICKUP, WAIT_FOR_STRANGER, WAIT_AFTER_STRANGER, RETURN_ANCHOR }
 
     private static class StationaryInfo {
         Vec3d lastPos;

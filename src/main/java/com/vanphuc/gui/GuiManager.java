@@ -71,9 +71,10 @@ public class GuiManager {
 //        addHuds.add(new HudTestTimerHud(200, 130));// Cậu có thể add thêm CoordsHud, ArmorHud... vào đây
         addHuds.add(new AutoSavePaperHud(200, 160));
         addHuds.add(new AutoSwitchHotbarHud(200, 190));
+        addHuds.add(new AutoQuestHud(200, 220));
 
         // Khởi tạo Bảng quản lý HUD
-        ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 20, 50, 120, addHuds);
+        ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 420, 150, 120, addHuds);
         hudPage.addWindow(hudListWindow); // Nhét cái bảng vào trang Hud
 
         // BẮT BUỘC: Add cả các HudWindow vào trang Hud để nó nhận Event chuột và render khi đang mở ClickGUI

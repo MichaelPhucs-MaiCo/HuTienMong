@@ -24,6 +24,7 @@ public class Modules {
         add(new AutoPickUp());
         add(new FarmCustomMobs());
         add(new CopyDataComp());
+        add(new AutoQuest());
     }
 
     public static Modules get() {
