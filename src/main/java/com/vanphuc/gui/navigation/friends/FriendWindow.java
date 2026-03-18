@@ -79,32 +79,55 @@ public class FriendWindow extends Window {
 
         if (button == 0 && pressed && inTitle) {
             isMoving = true;
+            // BÁO HIỆU VẼ LƯỚI
+            com.vanphuc.utils.ClientConfig.isAnyWindowMoving = true;
+
+            // CHỐT TỌA ĐỘ THỰC TẾ
+            exactX = position.getX();
+            exactY = position.getY();
+
             lastMouseX = mouseX;
             lastMouseY = mouseY;
             return true;
         } else if (button == 0 && !pressed) {
             isMoving = false;
+            com.vanphuc.utils.ClientConfig.isAnyWindowMoving = false; // TẮT LƯỚI
             isDraggingText = false;
         }
 
-        float startX = position.getX() + 6;
+        // Giữ nguyên logic chọn text bên dưới của cậu...
         float startY = position.getY() + titleHeight + 6;
-
         if (button == 0 && pressed && !inTitle && mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= startY && mouseY <= position.getY() + position.getHeight()) {
             updateCursorByMouse(mouseX, mouseY, true);
             isDraggingText = true;
             return true;
         }
-
         return super.onMouseClick(mouseX, mouseY, button, pressed) || inTitle;
     }
 
     @Override
     public void onMouseMove(double mouseX, double mouseY) {
         if (isMoving) {
-            position.setX(position.getX() + (float) (mouseX - lastMouseX));
-            position.setY(position.getY() + (float) (mouseY - lastMouseY));
+            // DÙNG LOGIC DELTA NHƯ WINDOW.JAVA ĐÃ FIX
+            double deltaX = mouseX - lastMouseX;
+            double deltaY = mouseY - lastMouseY;
+
+            exactX += deltaX;
+            exactY += deltaY;
+
+            double targetX = exactX;
+            double targetY = exactY;
+
+            if (com.vanphuc.utils.ClientConfig.snapping) {
+                int size = com.vanphuc.utils.ClientConfig.gridSize;
+                targetX = Math.round(exactX / size) * size;
+                targetY = Math.round(exactY / size) * size;
+            }
+
+            position.setX((float) targetX);
+            position.setY((float) targetY);
+
             this.arrange(this.position);
             lastMouseX = mouseX;
             lastMouseY = mouseY;

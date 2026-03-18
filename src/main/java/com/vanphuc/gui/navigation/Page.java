@@ -1,6 +1,7 @@
 package com.vanphuc.gui.navigation;
 
 import com.vanphuc.gui.Window;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class Page {
         }
         return false;
     }
+
 
     public void onMouseMove(double mouseX, double mouseY) {
         for (Window window : windows) {

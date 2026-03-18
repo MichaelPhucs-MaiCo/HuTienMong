@@ -60,7 +60,14 @@ public class ModuleWindow extends Window {
                 if (inHeader) {
                     boolean inIcon = mouseX >= position.getX() + position.getWidth() - 24;
                     if (inIcon) {
+                        // --- ĐÃ FIX Ở ĐÂY ---
                         isMoving = true;
+                        com.vanphuc.utils.ClientConfig.isAnyWindowMoving = true; // Bật lưới khi kéo
+
+                        // Chốt tọa độ thực tế để tránh lỗi nhảy góc
+                        exactX = position.getX();
+                        exactY = position.getY();
+
                         lastMouseX = mouseX;
                         lastMouseY = mouseY;
                     } else {
@@ -70,7 +77,9 @@ public class ModuleWindow extends Window {
                 }
             } else {
                 if (isMoving) {
+                    // --- ĐÃ FIX Ở ĐÂY ---
                     isMoving = false;
+                    com.vanphuc.utils.ClientConfig.isAnyWindowMoving = false; // Tắt lưới khi thả tay
                     com.vanphuc.utils.ConfigManager.save(); // Lưu lại tọa độ khi thả chuột
                     return true;
                 }

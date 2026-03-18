@@ -87,9 +87,15 @@ public class GuiManager {
         FriendWindow friendWindow = new FriendWindow(new Rectangle(friendX, friendY, friendWidth, friendHeight));
         friendPage.addWindow(friendWindow);
 
+        // 5. Setup Page Config (MỚI THÊM)
+        Page configPage = new ConfigPage(); // Khởi tạo trang ConfigPage cậu vừa làm
+
+        // Add tất cả Pages vào list quản lý
         pages.add(modulesPage);
         pages.add(hudPage);
         pages.add(friendPage);
+        pages.add(configPage); // Bắt buộc add vào list để NavigationBar nó đếm được
+
         activePage = modulesPage; // Mặc định mở lên sẽ ở tab Modules
 
         // --- QUAN TRỌNG: Nạp config ngay sau khi setup xong GUI ---
@@ -116,6 +122,10 @@ public class GuiManager {
         context.getMatrices().push();
         context.getMatrices().translate(0, 0, 500f);
 
+        // --- BƯỚC QUAN TRỌNG: GỌI HÀM VẼ LƯỚI Ở ĐÂY ---
+        // Vẽ lưới nền trước khi vẽ các Window đè lên
+        drawGrid(context);
+
         // Vẽ thanh điều hướng
         if (navigationBar != null) {
             navigationBar.draw(context);
@@ -127,6 +137,27 @@ public class GuiManager {
         }
 
         context.getMatrices().pop();
+    }
+
+    public void drawGrid(DrawContext context) {
+        // Sử dụng logic mới
+        if (com.vanphuc.utils.ClientConfig.showGrid && com.vanphuc.utils.ClientConfig.isAnyWindowMoving) {
+            int gridSize = com.vanphuc.utils.ClientConfig.gridSize;
+            int w = MinecraftClient.getInstance().getWindow().getScaledWidth();
+            int h = MinecraftClient.getInstance().getWindow().getScaledHeight();
+
+            // Xài mã màu chuẩn int của Java (Alpha 15, Xám) cho dễ render
+            int color = 0x15708090;
+
+            // Vẽ dọc
+            for (int x = 0; x <= w; x += gridSize) {
+                context.fill(x, 0, x + 1, h, color);
+            }
+            // Vẽ ngang
+            for (int y = 0; y <= h; y += gridSize) {
+                context.fill(0, y, w, y + 1, color);
+            }
+        }
     }
 
     public void addWindow(Window window) {
@@ -149,7 +180,7 @@ public class GuiManager {
 
         if (isOpen) {
             mc.mouse.unlockCursor();
-            // FIX Ở ĐÂY: Reset về Page đầu tiên (Modules) mỗi khi ClickGUI được mở lên
+            // Reset về Page đầu tiên (Modules) mỗi khi ClickGUI được mở lên
             if (!pages.isEmpty()) {
                 activePage = pages.get(0);
             }

@@ -10,11 +10,11 @@ import org.joml.Matrix4f;
 
 public class NavigationBar {
     public Rectangle position;
-    private final float tabWidth = 50f; // Bằng đúng width của module
+    private final float tabWidth = 50f; // Bằng đúng width của mỗi tab (tổng 200/4)
 
     public NavigationBar() {
-        // Tọa độ y = 10. Width = 150 (cho 3 tab, mỗi tab 100). Height = 20
-        this.position = new Rectangle(0, 10, 150, 20);
+        // Tọa độ y = 10. Width = 200 (cho 4 tab, mỗi tab 50). Height = 20
+        this.position = new Rectangle(0, 10, 200, 20);
     }
 
     public void draw(DrawContext context) {
@@ -31,16 +31,16 @@ public class NavigationBar {
         float currentX = position.getX();
         for (Page page : GuiManager.getInstance().pages) {
             boolean isActive = (GuiManager.getInstance().activePage == page);
-            // Màu nhấn Xanh Blue #0F4C81, chữ xám #888888
+            // Màu nhấn Xanh Blue #0F4C81, chữ xám #888888 khi không active
             Color textColor = isActive ? new Color(0xFF0F4C81) : new Color(0xFF888888);
 
-            // Căn giữa text trong cái tab 100px
+            // Căn giữa text trong cái tab 50px
             int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(page.name);
             float textX = currentX + (tabWidth - textWidth) / 2f;
             float textY = position.getY() + 6; // Hạ text xuống một chút cho vừa với height 20
 
             Render2D.drawString(context, MinecraftClient.getInstance().textRenderer, page.name, textX, textY, textColor);
-            currentX += tabWidth;
+            currentX += tabWidth; // Tiến lên 50px cho tab tiếp theo
         }
     }
 

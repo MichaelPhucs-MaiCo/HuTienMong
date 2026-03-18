@@ -6,7 +6,7 @@ import java.util.List;
 
 public abstract class UIElement {
     protected UIElement parent;
-    protected final List<UIElement> children = new ArrayList<>();
+    public final List<UIElement> children = new ArrayList<>();
     protected Rectangle position = new Rectangle(0, 0, 0, 0);
     protected Margin margin = new Margin(0, 0, 0, 0);
     protected boolean isHovered = false;

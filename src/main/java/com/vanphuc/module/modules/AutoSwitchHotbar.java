@@ -21,6 +21,7 @@ public class AutoSwitchHotbar extends Module {
     private int startupIndex = 0;
     private long nextStartupTime = 0;
     private boolean isStartupPhase = true;
+    private int lastListHash = 0;
 
     public final ActionSetting openListSetting = new ActionSetting("List", () -> {
         GuiManager.getInstance().closeSettingsWindows();
@@ -46,14 +47,23 @@ public class AutoSwitchHotbar extends Module {
     }
 
     public List<Task> getTasks() {
+        // Lấy mã Hash của cái list hiện tại trong Config
+        int currentHash = listSetting.getValue().hashCode();
+
+        // Nếu mã Hash khác với lần trước (tức là config vừa được load từ JSON, hoặc cậu vừa sửa GUI)
+        // thì lập tức parse lại danh sách luôn!
+        if (lastListHash != currentHash) {
+            parseTasks();
+            lastListHash = currentHash;
+        }
+
         return tasks;
     }
-
     public boolean isStartupPhase() {
         return isStartupPhase;
     }
 
-    private void parseTasks() {
+    public void parseTasks() {
         tasks.clear();
         Pattern p = Pattern.compile("(?i)slot\\s+(\\d+)\\s+delay\\s+(\\d+)s?");
         for (String line : listSetting.getValue()) {
@@ -115,9 +125,6 @@ public class AutoSwitchHotbar extends Module {
                 mc.player.getInventory().selectedSlot = task.slot - 1;
                 // Cập nhật lại thời gian thực thi cuối cùng để bắt đầu chu kỳ mới
                 task.lastExecutedTime = now;
-
-                // Debug nhẹ cho ông dễ theo dõi
-                // info("Slot " + task.slot + " đã hết " + (task.delayMs/1000) + "s, đang chuyển...");
             }
         }
     }
