@@ -36,10 +36,10 @@ public class FarmCustomMobs extends Module {
     // --- SETTINGS ---
     public final NumberSetting scanRadius = new NumberSetting("Phạm vi tìm quái", 30.0, 5.0, 100.0);
     public final NumberSetting maintainDistance = new NumberSetting("Khoảng cách đánh", 2.0, 0.5, 6.0);
-    public final NumberSetting playerDetectRadius = new NumberSetting("Phạm vi radar né", 150.0, 10.0, 300.0);
+    public final NumberSetting playerDetectRadius = new NumberSetting("Phạm vi quét né", 150.0, 10.0, 300.0);
     public final BooleanSetting useWhitelist = new BooleanSetting("Né người lạ (Friend)", true);
-    public final BooleanSetting enableKiting = new BooleanSetting("Thả diều (Bunny Hop lùi)", true);
-    public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm khi rảnh", false);
+    public final BooleanSetting enableKiting = new BooleanSetting("Đi lùi (Bunny Hop lùi)", true);
+    public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm", false);
 
     public final StringListSetting targetListSetting = new StringListSetting("TargetList", new ArrayList<>());
 
@@ -74,7 +74,7 @@ public class FarmCustomMobs extends Module {
     private final Map<UUID, StationaryInfo> stationaryMap = new HashMap<>();
 
     public FarmCustomMobs() {
-        super("FarmCustomMobs", "Hệ thống auto farm quái xịn xò kết hợp Baritone.", Items.DIAMOND_SWORD.getDefaultStack());
+        super("FarmCustomMobs", "Auto farm quái custom kết hợp Baritone.", Items.DIAMOND_SWORD.getDefaultStack());
 
         addSetting(scanRadius);
         addSetting(maintainDistance);
@@ -93,7 +93,7 @@ public class FarmCustomMobs extends Module {
         });
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("fmobs")
+            dispatcher.register(ClientCommandManager.literal("vpMob")
                     .then(ClientCommandManager.literal("target")
                             .then(ClientCommandManager.literal("add").executes(ctx -> {
                                 if (mc.player != null) {
@@ -153,7 +153,7 @@ public class FarmCustomMobs extends Module {
         super.onActivate();
         if (mc.player != null) {
             if (targetListSetting.getValue().isEmpty()) {
-                error("Danh sách mục tiêu trống! Dùng '/fmobs target add' hoặc chỉnh trong UI trước ❌");
+                error("Danh sách mục tiêu trống! Dùng '/vpMob target add' hoặc chỉnh trong UI trước ❌");
                 toggle();
                 return;
             }

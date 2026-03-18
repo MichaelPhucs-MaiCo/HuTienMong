@@ -1,7 +1,21 @@
+// PHẢI NẰM ĐẦU TIÊN
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		// Bản 7.5.0 hỗ trợ Java 21 tốt hơn bản 7.1.0 trong doc ông tìm thấy nhé
+		classpath 'com.guardsquare:proguard-gradle:7.5.0'
+	}
+}
+
 plugins {
 	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
+
+// Sau đó mới tới các phần khác...
+import proguard.gradle.ProGuardTask
 
 version = project.mod_version
 group = project.maven_group
@@ -122,5 +136,36 @@ publishing {
 
 	tasks.withType(JavaCompile) {
 		options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+	}
+
+	tasks.register('obfuscateJar', ProGuardTask) {
+		// Chạy sau khi Fabric đã remap JAR xong
+		dependsOn tasks.remapJar
+
+		// Lấy file JAR đã remap (đầu vào)
+		def inputJar = tasks.remapJar.archiveFile
+
+		// ĐỊNH NGHĨA LẠI ĐƯỜNG DẪN OUTPUT (Sửa lỗi archivesBaseName ở đây)
+		// Sử dụng project.archives_base_name hoặc tên cố định để tránh lỗi property
+		def outputJar = layout.buildDirectory.file("libs/${project.archives_base_name}-${project.version}-obf.jar")
+
+		injars inputJar
+		outjars outputJar
+
+		// Thư viện chạy máy (Sửa lỗi cho Java 21)
+		libraryjars "${System.getProperty('java.home')}/jmods"
+
+		// Quét dependencies
+		configurations.compileClasspath.collect {
+			if (it.exists()) {
+				libraryjars it
+			}
+		}
+
+		configuration 'proguard.pro'
+
+		doLast {
+			println "🚀 Build thành công! File mod siêu sạch tại: ${outputJar.get().asFile.path}"
+		}
 	}
 }

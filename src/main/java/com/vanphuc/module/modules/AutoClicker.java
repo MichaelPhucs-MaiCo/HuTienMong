@@ -22,7 +22,7 @@ public class AutoClicker extends Module {
     public final NumberSetting speedRightMs = new NumberSetting("Delay Phải (ms)", 30000.0, 1.0, 60000.0);
 
     public AutoClicker() {
-        super("AutoClicker", "Trái múa quạt ảo, Phải nhấp thật tung skill.", Items.GOLDEN_SWORD.getDefaultStack());
+        super("AutoClicker", "Autoclick chuột trái phải", Items.GOLDEN_SWORD.getDefaultStack());
 
         addSetting(enableLeft);
         addSetting(speedLeftMs);

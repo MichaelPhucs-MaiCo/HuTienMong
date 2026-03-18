@@ -13,7 +13,7 @@ public class CopyDataComp extends Module {
     public final KeybindSetting altClickKey = new KeybindSetting("Phím L-Click phụ", -1, this);
 
     public CopyDataComp() {
-        super("CopyDataComp", "Copy Data Item. Cuộn chuột hoặc dùng phím phụ để lụm đồ. 📋", Items.PAPER.getDefaultStack());
+        super("CopyDataComp", "Copy Data Item. Cuộn chuột hoặc dùng phím phụ thay thế cho chuột trái 📋", Items.PAPER.getDefaultStack());
         addSetting(useScrollToClick);
         addSetting(altClickKey);
     }
@@ -27,6 +27,6 @@ public class CopyDataComp extends Module {
     @Override
     public void onDeactivate() {
         super.onDeactivate();
-        info("§c§lĐÃ TẮT! §fMọi thứ trở về quỹ đạo.");
+        info("§c§lĐÃ TẮT!.");
     }
 }

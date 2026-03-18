@@ -66,7 +66,7 @@ public class AutoPickUp extends Module {
     private final List<String> strangerLog = new ArrayList<>(); // Log lại tên người lạ đi ngang qua
 
     public AutoPickUp() {
-        super("AutoPickUp", "Tự động lụm đồ bằng Baritone, có radar né người lạ.", Items.HOPPER.getDefaultStack());
+        super("AutoPickUp", "Tự động nhặt đồ bằng Baritone", Items.HOPPER.getDefaultStack());
 
         addSetting(scanRadius);
         addSetting(playerDetectRadius);
@@ -86,7 +86,7 @@ public class AutoPickUp extends Module {
 
         // Chỉ giữ lại lệnh /mPItem add
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("mPItem")
+            dispatcher.register(ClientCommandManager.literal("vpItem")
                     .then(ClientCommandManager.literal("add").executes(ctx -> {
                         if (mc.player != null) {
                             ItemStack handStack = mc.player.getMainHandStack();
@@ -126,7 +126,7 @@ public class AutoPickUp extends Module {
             this.anchorPos = mc.player.getPos();
             this.state = State.SCANNING;
             strangerLog.clear();
-            info(String.format("Đã chốt tâm lụm đồ tại: %.1f, %.1f 📍", anchorPos.x, anchorPos.z));
+            info(String.format("Đã xác định tâm lụm đồ tại: %.1f, %.1f 📍", anchorPos.x, anchorPos.z));
         }
     }
 
@@ -145,7 +145,7 @@ public class AutoPickUp extends Module {
         // --- CƠ CHẾ SINH TỒN ---
         if (useWhitelist.isEnabled() && isStrangerNearby()) {
             if (state != State.WAIT_FOR_STRANGER && state != State.WAIT_AFTER_STRANGER) {
-                info("Phát hiện người lạ! Đứng hình AFK ngay 🛑");
+                info("Phát hiện người lạ! Dừng🛑");
                 BaritoneHelper.stop(); // Ngắt Baritone ngay lập tức
                 state = State.WAIT_FOR_STRANGER;
             }
@@ -163,7 +163,7 @@ public class AutoPickUp extends Module {
             case WAIT_AFTER_STRANGER -> {
                 BaritoneHelper.stop();
                 if (--timer <= 0) {
-                    info("An toàn rồi, tiếp tục cày cuốc thôi 🚜");
+                    info("An toàn, tiếp tục🚜");
                     state = State.SCANNING;
                 }
             }

@@ -3,13 +3,11 @@
 	"id": "hutienmong",
 	"version": "${version}",
 	"name": "HuTienMong",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Client dành cho Server HuTienMong",
 	"authors": [
-		"Me!"
+		"Buu"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "MIT",
 	"icon": "assets/hutienmong/icon.png",
@@ -27,8 +25,11 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.16.10",
-		"minecraft": "~1.21.4",
+		"minecraft": "1.21.4",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

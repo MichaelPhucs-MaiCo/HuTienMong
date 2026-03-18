@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AutoSwitchHotbar extends Module {
-    public final StringListSetting listSetting = new StringListSetting("ListContent", new ArrayList<>(List.of("Slot 4 delay 5s", "Slot 5 delay 11s", "Slot 6 delay 8s")));
+    public final StringListSetting listSetting = new StringListSetting("ListScript", new ArrayList<>(List.of("Slot 4 delay 5s", "Slot 5 delay 11s", "Slot 6 delay 8s")));
     private final List<Task> tasks = new ArrayList<>();
 
     // Quản lý Phase 1 (Startup)
@@ -32,7 +32,7 @@ public class AutoSwitchHotbar extends Module {
     });
 
     public AutoSwitchHotbar() {
-        super("AutoSwitchHotbar", "Nhảy slot tự động với đồng hồ riêng biệt cho mỗi slot.", Items.REDSTONE_TORCH.getDefaultStack());
+        super("AutoSwitchHotbar", "Chuyển slot tự động.", Items.REDSTONE_TORCH.getDefaultStack());
         addSetting(openListSetting);
         addSetting(listSetting);
     }
@@ -112,7 +112,7 @@ public class AutoSwitchHotbar extends Module {
 
                 if (startupIndex >= tasks.size()) {
                     isStartupPhase = false;
-                    info("Chuyển sang Phase 2: Chạy độc lập từng slot ⏱️");
+                    info("Chạy độc lập từng slot ⏱️");
                 }
             }
             return; // Đang startup thì không chạy logic Phase 2

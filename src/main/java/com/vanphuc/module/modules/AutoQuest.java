@@ -54,7 +54,7 @@ public class AutoQuest extends Module {
     private final int[] IGNORED_SLOTS = {7, 8, 16, 17, 25, 26, 34, 35, 43, 44};
 
     public AutoQuest() {
-        super("AutoQuest", "Cày quest tự động đa pha chuẩn chỉ, nhàn hạ cái thân.", Items.WRITABLE_BOOK.getDefaultStack());
+        super("AutoQuest", "Nhận quest tự động", Items.WRITABLE_BOOK.getDefaultStack());
         addSetting(questNameList);
         addSetting(bossBarNameList);
 
@@ -76,7 +76,7 @@ public class AutoQuest extends Module {
         state = State.PHASE_1_OPEN_GUI;
         delayTimer = 0;
         cooldownEndTime = 0;
-        info("Khởi động dây chuyền cày Quest! Đang check Phase 1 🕵️‍♂️");
+        info("Khởi động nhận Quest! Kiểm tra nhiệm vụ đang làm🕵️‍♂️");
     }
 
     @Override
@@ -117,7 +117,7 @@ public class AutoQuest extends Module {
                     mc.player.closeHandledScreen();
                     state = State.WAIT_30S;
                     delayTimer = now + 30000L;
-                    info("Quest đang chạy bon bon, nghỉ 30s xả hơi ☕");
+                    info("Quest đã được nhận, nghỉ 30s ☕");
                 } else {
                     state = State.PHASE_2_CLICK_35;
                 }
@@ -151,7 +151,7 @@ public class AutoQuest extends Module {
                 if (checkBossBar(getTargetBossBar())) {
                     mc.player.closeHandledScreen();
                     state = State.MONITOR_BOSSBAR;
-                    info("Đã lụm Quest thành công! Đang check BossBar... ⚔️");
+                    info("Đã nhận Quest thành công! Check BossBar... ⚔️");
                 } else if (now > delayTimer + 3000L) {
                     state = State.PHASE_1_OPEN_GUI;
                 }
@@ -159,7 +159,7 @@ public class AutoQuest extends Module {
 
             case MONITOR_BOSSBAR -> {
                 if (!checkBossBar(getTargetBossBar())) {
-                    info("BossBar bay màu! Khả năng đã xong hoặc tạch, test lại Phase 1 🔄");
+                    info("BossBar biến mất! Test lại Phase 1 🔄");
                     state = State.PHASE_1_OPEN_GUI;
                     delayTimer = now + 1500L;
                 }
@@ -179,7 +179,7 @@ public class AutoQuest extends Module {
                     String lore = getFullLore(stack);
 
                     if (lore.contains("Bạn có thể bắt đầu lại nhiệm vụ này!")) {
-                        info("Hết Cooldown rồi, quất thôi! Quay về Phase 1 🏎️");
+                        info("Có thể nhận nhiệm vụ. Quay về Phase 1 🏎️");
                         state = State.PHASE_1_OPEN_GUI;
                         delayTimer = now + 500L;
 
@@ -188,7 +188,7 @@ public class AutoQuest extends Module {
                         cooldownEndTime = now + (cdSeconds * 1000L);
                         mc.player.closeHandledScreen();
                         state = State.COOLDOWN_WAIT;
-                        info(String.format("Quest đang dính hồi chiêu! Ráng chờ %d giây nữa nha mậy ⏳", cdSeconds));
+                        info(String.format("Quest đang trong thời gian hồi! Đợi %d giây nữa⏳", cdSeconds));
                     } else {
                         state = State.PHASE_1_OPEN_GUI;
                     }
@@ -200,7 +200,7 @@ public class AutoQuest extends Module {
             }
             case COOLDOWN_WAIT -> {
                 if (now >= cooldownEndTime) {
-                    info("Thời tới cản không kịp! Cooldown xong rồi, múc! 💥");
+                    info("Hết thời gian đợi 💥");
                     state = State.PHASE_1_OPEN_GUI;
                 }
             }

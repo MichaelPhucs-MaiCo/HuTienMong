@@ -31,7 +31,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 
     // Settings
     public final StringListSetting trashListSetting = new StringListSetting("TrashList", new ArrayList<>());
-    public final NumberSetting saveTimeMinutes = new NumberSetting("SaveTimeMinutes", 5.0, 1.0, 120.0);
+    public final NumberSetting saveTimeMinutes = new NumberSetting("Time", 5.0, 1.0, 120.0);
     public final ActionSetting openListSetting;
     public final ActionSetting clearTrashSetting;
 
@@ -44,7 +44,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 
         public AutoSavePaper() {
             // Thêm Items.PAPER.getDefaultStack() vào đây để nó hiện icon Tờ Giấy nhé
-            super("AutoSavePaper", "Auto deposit & auto trash helper (port from AutoSavePaperMod).", Items.PAPER.getDefaultStack());
+            super("AutoSavePaper", "Tự động để đồ vào ec và tự động trash", Items.PAPER.getDefaultStack());
 
             openListSetting = new ActionSetting("Trash List", () -> {
                 GuiManager.getInstance().closeSettingsWindows();
