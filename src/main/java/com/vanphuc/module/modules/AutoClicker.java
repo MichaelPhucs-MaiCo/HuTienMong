@@ -40,13 +40,8 @@ public class AutoClicker extends Module {
 
     @Override
     public void onUpdate() {
-        if (!isActive() || mc.player == null || mc.currentScreen != null) {
-            if (isActive()) {
-                mc.options.attackKey.setPressed(false);
-                mc.options.useKey.setPressed(false);
-            }
-            return;
-        }
+        // CHỈ cần check module có đang bật hay không và người chơi có tồn tại không
+        if (!isActive() || mc.player == null) return;
 
         long currentTime = System.currentTimeMillis();
 
@@ -54,7 +49,7 @@ public class AutoClicker extends Module {
         if (enableLeft.isEnabled()) {
             if (currentTime - lastLeftSwingTime >= speedLeftMs.getValue().longValue()) {
                 lastLeftSwingTime = currentTime;
-                // Chỉ vung tay để gây dame ảo, không dùng hàm attack()
+                // Giữ nguyên mc.player.swingHand để chỉ vung tay ảo, không gây damage thật
                 mc.player.swingHand(Hand.MAIN_HAND);
             }
         }

@@ -5,6 +5,7 @@ import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.window.AutoQuestWindow;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
+import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.StringListSetting;
 import com.vanphuc.utils.ChatUtils;
 import net.minecraft.client.MinecraftClient;
@@ -24,6 +25,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AutoQuest extends Module {
+    // --- SETTINGS MỚI ---
+    public final NumberSetting actionDelay = new NumberSetting("Delay thao tác (ms)", 1000.0, 100.0, 5000.0);
+    public final NumberSetting waitCycle = new NumberSetting("Đợi check lại sau (s)", 30.0, 1.0, 300.0);
+
+    // --- SETTINGS CŨ ---
     public final StringListSetting questNameList = new StringListSetting("Tên Nhiệm Vụ", new ArrayList<>(List.of("Đề Thăng Căn Cơ")));
     public final StringListSetting bossBarNameList = new StringListSetting("Tên BossBar", new ArrayList<>(List.of("Đề Thăng Căn Cơ")));
 
@@ -57,6 +63,8 @@ public class AutoQuest extends Module {
         super("AutoQuest", "Nhận quest tự động", Items.WRITABLE_BOOK.getDefaultStack());
         addSetting(questNameList);
         addSetting(bossBarNameList);
+        addSetting(actionDelay);
+        addSetting(waitCycle);
 
         addSetting(openQuestBtn);
         addSetting(openBossBarBtn);
@@ -95,18 +103,21 @@ public class AutoQuest extends Module {
 
         if (now < delayTimer) return;
 
+
+        long msDelay = actionDelay.getValue().longValue();
+
         switch (state) {
             case PHASE_1_OPEN_GUI -> {
                 mc.player.networkHandler.sendChatCommand("quest");
                 state = State.PHASE_1_WAIT_GUI;
-                delayTimer = now + 1000L;
+                delayTimer = now + msDelay;
             }
             case PHASE_1_WAIT_GUI -> {
                 if (isQuestGuiOpen()) {
                     clickSlot(26);
                     state = State.PHASE_1_CHECK_ITEMS;
-                    delayTimer = now + 1000L;
-                } else if (now > delayTimer + 2000L) {
+                    delayTimer = now + msDelay;
+                } else if (now > delayTimer + (msDelay * 2)) { // Timeout linh hoạt dựa theo delay
                     state = State.PHASE_1_OPEN_GUI;
                 }
             }
@@ -116,8 +127,10 @@ public class AutoQuest extends Module {
                 if (slot != -1) {
                     mc.player.closeHandledScreen();
                     state = State.WAIT_30S;
-                    delayTimer = now + 30000L;
-                    info("Quest đã được nhận, nghỉ 30s ☕");
+                    // Sử dụng giá trị từ setting waitCycle (giây sang ms) [cite: 1783]
+                    long waitMs = waitCycle.getValue().longValue() * 1000L;
+                    delayTimer = now + waitMs;
+                    info(String.format("Quest đã được nhận, nghỉ %ds ☕", waitCycle.getValue().intValue()));
                 } else {
                     state = State.PHASE_2_CLICK_35;
                 }
@@ -129,12 +142,12 @@ public class AutoQuest extends Module {
             case PHASE_2_CLICK_35 -> {
                 if (!isQuestGuiOpen()) {
                     mc.player.networkHandler.sendChatCommand("quest");
-                    delayTimer = now + 1000L;
+                    delayTimer = now + msDelay;
                     return;
                 }
                 clickSlot(35);
                 state = State.PHASE_2_CHECK_ITEMS;
-                delayTimer = now + 1000L;
+                delayTimer = now + msDelay;
             }
             case PHASE_2_CHECK_ITEMS -> {
                 if (!isQuestGuiOpen()) { state = State.PHASE_1_OPEN_GUI; break; }
@@ -142,7 +155,7 @@ public class AutoQuest extends Module {
                 if (slot != -1) {
                     clickSlot(slot);
                     state = State.PHASE_2_WAIT_BOSSBAR;
-                    delayTimer = now + 800L;
+                    delayTimer = now + msDelay;
                 } else {
                     state = State.PHASE_3_CLICK_17;
                 }
@@ -152,7 +165,7 @@ public class AutoQuest extends Module {
                     mc.player.closeHandledScreen();
                     state = State.MONITOR_BOSSBAR;
                     info("Đã nhận Quest thành công! Check BossBar... ⚔️");
-                } else if (now > delayTimer + 3000L) {
+                } else if (now > delayTimer + (msDelay * 3)) {
                     state = State.PHASE_1_OPEN_GUI;
                 }
             }
@@ -161,7 +174,7 @@ public class AutoQuest extends Module {
                 if (!checkBossBar(getTargetBossBar())) {
                     info("BossBar biến mất! Test lại Phase 1 🔄");
                     state = State.PHASE_1_OPEN_GUI;
-                    delayTimer = now + 1500L;
+                    delayTimer = now + msDelay;
                 }
             }
 
@@ -169,7 +182,7 @@ public class AutoQuest extends Module {
                 if (!isQuestGuiOpen()) { state = State.PHASE_1_OPEN_GUI; break; }
                 clickSlot(17);
                 state = State.PHASE_3_CHECK_ITEMS;
-                delayTimer = now + 1000L;
+                delayTimer = now + msDelay;
             }
             case PHASE_3_CHECK_ITEMS -> {
                 if (!isQuestGuiOpen()) { state = State.PHASE_1_OPEN_GUI; break; }
@@ -181,7 +194,7 @@ public class AutoQuest extends Module {
                     if (lore.contains("Bạn có thể bắt đầu lại nhiệm vụ này!")) {
                         info("Có thể nhận nhiệm vụ. Quay về Phase 1 🏎️");
                         state = State.PHASE_1_OPEN_GUI;
-                        delayTimer = now + 500L;
+                        delayTimer = now + msDelay;
 
                     } else if (lore.contains("Bạn có thể bắt đầu lại nhiệm vụ này sau")) {
                         long cdSeconds = extractTimeFromLore(lore);
@@ -195,7 +208,7 @@ public class AutoQuest extends Module {
                 } else {
                     mc.player.closeHandledScreen();
                     state = State.PHASE_1_OPEN_GUI;
-                    delayTimer = now + 5000L;
+                    delayTimer = now + (msDelay * 5); // Timeout dài khi không thấy item
                 }
             }
             case COOLDOWN_WAIT -> {
