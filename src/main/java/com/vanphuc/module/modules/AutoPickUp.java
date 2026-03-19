@@ -104,9 +104,11 @@ public class AutoPickUp extends Module {
                                         }
                                     }
                                 }
-                                ChatUtils.sendPlayerMsg("Đã thêm vào ưu tiên: " + handStack.getName().getString());
+                                // Đã sửa thành info nội bộ thay vì chat tổng
+                                info("Đã thêm vào ưu tiên: " + handStack.getName().getString());
                             } else {
-                                ChatUtils.sendPlayerMsg("Bạn phải cầm một item trên tay!");
+                                // Đã sửa thành báo lỗi nội bộ
+                                error("Bạn phải cầm một item trên tay!");
                             }
                         }
                         return 1;
