@@ -4,10 +4,7 @@ import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.Size;
 import com.vanphuc.gui.UIElement;
 import com.vanphuc.gui.Window;
-import com.vanphuc.gui.components.BooleanComponent;
-import com.vanphuc.gui.components.ButtonComponent;
-import com.vanphuc.gui.components.KeybindComponent;
-import com.vanphuc.gui.components.SliderComponent;
+import com.vanphuc.gui.components.*;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.*;
 import net.minecraft.client.gui.DrawContext;
@@ -34,6 +31,7 @@ public class SettingsWindow extends Window {
             else if (s instanceof NumberSetting ns) addChild(new SliderComponent(ns));
             else if (s instanceof KeybindSetting ks) addChild(new KeybindComponent(ks));
             else if (s instanceof ActionSetting as) addChild(new ButtonComponent(as));// Thêm dòng này
+            else if (s instanceof StringSetting ss) addChild(new StringInputComponent(ss));
         }
         super.initialize();
         arrange(position);

@@ -5,9 +5,7 @@ import com.vanphuc.gui.Size;
 import com.vanphuc.gui.UIElement;
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.Module;
-import com.vanphuc.module.settings.BooleanSetting;
-import com.vanphuc.module.settings.NumberSetting;
-import com.vanphuc.module.settings.Setting;
+import com.vanphuc.module.settings.*;
 import com.vanphuc.utils.render.Render2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -36,6 +34,8 @@ public class ModuleComponent extends UIElement {
             } else if (s instanceof NumberSetting numberSetting) {
                 addChild(new SliderComponent(numberSetting));
             }
+            else if (s instanceof StringSetting ss)
+                addChild(new StringInputComponent(ss));
         }
     }
 

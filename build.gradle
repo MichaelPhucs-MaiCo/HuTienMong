@@ -43,7 +43,7 @@ tasks.register('obfuscateJar', ProGuardTask) {
 	injars tasks.remapJar.archiveFile
 
 	// Output file cuối cùng
-	def outputName = "${project.archives_base_name}-${project.version}-obf.jar"
+	def outputName = "${project.archives_base_name}.jar"
 	outjars layout.buildDirectory.file("libs/${outputName}")
 
 	libraryjars "${System.getProperty('java.home')}/jmods"

@@ -53,6 +53,9 @@ public class ConfigManager {
                     keyObj.addProperty("mods", ks.getModifiers());
                     settingsObj.add(setting.getName(), keyObj);
                 }
+                else if (setting instanceof StringSetting strS) {
+                    settingsObj.addProperty(setting.getName(), strS.getValue());
+                }
 
                 else if (setting instanceof StringListSetting sls) {
                     JsonArray arr = new JsonArray();
@@ -141,6 +144,9 @@ public class ConfigManager {
                                         } else if (setting instanceof KeybindSetting ks) {
                                             JsonObject keyObj = settingsObj.getAsJsonObject(setting.getName());
                                             ks.setKey(keyObj.get("key").getAsInt(), keyObj.get("mods").getAsInt());
+                                        }
+                                        else if (setting instanceof StringSetting strS) {
+                                            strS.setValue(settingsObj.get(setting.getName()).getAsString());
                                         }
                                         else if (setting instanceof StringListSetting sls) {
                                             JsonArray arr = settingsObj.getAsJsonArray(setting.getName());

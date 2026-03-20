@@ -1,17 +1,23 @@
-package com.vanphuc.gui;
+package com.vanphuc.gui.window;
 
+import com.vanphuc.gui.GuiManager;
+import com.vanphuc.gui.Rectangle;
+import com.vanphuc.gui.Window;
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.modules.AutoSavePaper;
+import com.vanphuc.utils.ConfigManager;
 import com.vanphuc.utils.render.Render2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrashNotepadWindow extends Window {
+/**
+ * SaveNotepadWindow - Cửa sổ chỉnh sửa danh sách đồ quý của Hư Tiên Mộng 📝
+ */
+public class SaveNotepadWindow extends Window {
     private final AutoSavePaper module;
     private final List<StringBuilder> lines = new ArrayList<>();
     private int cursorLine = 0;
@@ -20,19 +26,18 @@ public class TrashNotepadWindow extends Window {
     private int selectCol = -1;
     private boolean isDraggingText = false;
 
-    public TrashNotepadWindow(AutoSavePaper module, Rectangle position) {
-        super("§l" + module.name + " List", position);
+    public SaveNotepadWindow(AutoSavePaper module, Rectangle position) {
+        super("§l" + module.name + " Save List", position); // Tiêu đề in đậm [cite: 987, 1219]
         this.module = module;
-        refresh(); // Nạp dữ liệu lần đầu
+        refresh(); // Nạp dữ liệu khi mở [cite: 315]
     }
 
-    // HÀM LÀM MỚI DỮ LIỆU ĐỂ GỌI TỪ BÊN NGOÀI KHI CÓ ITEM MỚI
     public void refresh() {
         lines.clear();
-        if (module.getListContent().isEmpty()) {
+        if (module.saveListSetting.getValue().isEmpty()) {
             lines.add(new StringBuilder());
         } else {
-            for (String s : module.getListContent()) {
+            for (String s : module.saveListSetting.getValue()) {
                 lines.add(new StringBuilder(s));
             }
         }
@@ -42,8 +47,10 @@ public class TrashNotepadWindow extends Window {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
+        // Tự động giãn chiều cao theo số dòng [cite: 319, 803]
         this.position.setHeight(Math.max(100f, titleHeight + 16f + (lines.size() * 12f)));
         super.draw(context, partialTicks);
+
         Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
         float startX = position.getX() + 6;
         float startY = position.getY() + titleHeight + 6;
@@ -53,6 +60,8 @@ public class TrashNotepadWindow extends Window {
         for (int i = 0; i < lines.size(); i++) {
             String text = lines.get(i).toString();
             float lineY = startY + (i * 12);
+
+            // Vẽ vùng bôi đen màu Xanh Blue Sleek Carbon [cite: 593, 810]
             if (sel != null && i >= sel[0] && i <= sel[2]) {
                 int sCol = (i == sel[0]) ? sel[1] : 0;
                 int eCol = (i == sel[2]) ? sel[3] : text.length();
@@ -61,7 +70,10 @@ public class TrashNotepadWindow extends Window {
                 if (i < sel[2] && eCol == text.length()) x2 += 4;
                 Render2D.drawBox(matrix, x1, lineY - 1, x2 - x1, 11, new Color(0x663B82F6));
             }
+
             Render2D.drawString(context, mc.textRenderer, text, startX, lineY, new Color(0xFFFFFFFF));
+
+            // Vẽ con trỏ nhấp nháy [cite: 595, 812]
             if (i == cursorLine && !hasSelection() && (System.currentTimeMillis() / 500) % 2 == 0) {
                 float cx = startX + mc.textRenderer.getWidth(text.substring(0, cursorCol));
                 Render2D.drawBox(matrix, cx, lineY - 1, 1, 10, new Color(0xFFFFFFFF));
@@ -73,6 +85,7 @@ public class TrashNotepadWindow extends Window {
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
         boolean inTitle = mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= position.getY() && mouseY <= position.getY() + titleHeight;
+
         if (button == 0 && pressed && inTitle) {
             isMoving = true;
             lastMouseX = mouseX;
@@ -82,7 +95,7 @@ public class TrashNotepadWindow extends Window {
             isMoving = false;
             isDraggingText = false;
         }
-        float startX = position.getX() + 6;
+
         float startY = position.getY() + titleHeight + 6;
         if (button == 0 && pressed && !inTitle && mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= startY && mouseY <= position.getY() + position.getHeight()) {
@@ -123,7 +136,8 @@ public class TrashNotepadWindow extends Window {
                     float wPrev = mc.textRenderer.getWidth(text.substring(0, i - 1));
                     if (mouseX - (startX + wPrev) < (startX + w) - mouseX) { colIdx = i - 1; break; }
                 }
-                colIdx = i; break;
+                colIdx = i;
+                break;
             }
             colIdx = text.length();
         }
@@ -132,11 +146,14 @@ public class TrashNotepadWindow extends Window {
                 GLFW.glfwGetKey(mc.getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
 
         if (isClick && !shift) {
-            selectLine = -1; selectCol = -1;
-        } else {
-            if (!hasSelection() && (shift || isDraggingText)) { selectLine = cursorLine; selectCol = cursorCol; }
+            selectLine = -1;
+            selectCol = -1;
+        } else if (!hasSelection() && (shift || isDraggingText)) {
+            selectLine = cursorLine;
+            selectCol = cursorCol;
         }
-        cursorLine = lineIdx; cursorCol = colIdx;
+        cursorLine = lineIdx;
+        cursorCol = colIdx;
     }
 
     @Override
@@ -151,11 +168,9 @@ public class TrashNotepadWindow extends Window {
     @Override
     public boolean onKey(int key, int action, int mods) {
         if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
-
-            // XỬ LÝ PHÍM ESC: CHỈ THOÁT WINDOW NÀY CHỨ KHÔNG THOÁT GUI
             if (key == GLFW.GLFW_KEY_ESCAPE) {
                 GuiManager.getInstance().removeWindow(this);
-                com.vanphuc.utils.ConfigManager.save();
+                ConfigManager.save();
                 GuiManager.getInstance().toggle();
                 return true;
             }
@@ -177,7 +192,7 @@ public class TrashNotepadWindow extends Window {
             else if (key == GLFW.GLFW_KEY_DOWN) { moveCursorVertical(1, shift); return true; }
 
             if (key == GLFW.GLFW_KEY_BACKSPACE) {
-                if (hasSelection()) { deleteSelection(); }
+                if (hasSelection()) deleteSelection();
                 else {
                     if (cursorCol > 0) { lines.get(cursorLine).deleteCharAt(cursorCol - 1); cursorCol--; saveData(); }
                     else if (cursorLine > 0) {
@@ -190,7 +205,7 @@ public class TrashNotepadWindow extends Window {
                 }
                 return true;
             } else if (key == GLFW.GLFW_KEY_DELETE) {
-                if (hasSelection()) { deleteSelection(); }
+                if (hasSelection()) deleteSelection();
                 else {
                     if (cursorCol < lines.get(cursorLine).length()) { lines.get(cursorLine).deleteCharAt(cursorCol); saveData(); }
                     else if (cursorLine < lines.size() - 1) {
@@ -212,13 +227,14 @@ public class TrashNotepadWindow extends Window {
         return super.onKey(key, action, mods);
     }
 
+    // --- Các hàm hỗ trợ logic text (Tương tự NotepadWindow) ---
     private void moveCursor(int offset, boolean shift) {
         if (shift && !hasSelection()) { selectLine = cursorLine; selectCol = cursorCol; }
         else if (!shift && hasSelection()) { selectLine = -1; selectCol = -1; }
         if (offset == -1) {
             if (cursorCol > 0) cursorCol--;
             else if (cursorLine > 0) { cursorLine--; cursorCol = lines.get(cursorLine).length(); }
-        } else if (offset == 1) {
+        } else {
             if (cursorCol < lines.get(cursorLine).length()) cursorCol++;
             else if (cursorLine < lines.size() - 1) { cursorLine++; cursorCol = 0; }
         }
@@ -232,7 +248,6 @@ public class TrashNotepadWindow extends Window {
     }
 
     private boolean hasSelection() { return selectLine != -1 && (selectLine != cursorLine || selectCol != cursorCol); }
-
     private int[] getNormalizedSelection() {
         if (selectLine < cursorLine || (selectLine == cursorLine && selectCol < cursorCol)) return new int[]{selectLine, selectCol, cursorLine, cursorCol};
         else return new int[]{cursorLine, cursorCol, selectLine, selectCol};
@@ -282,11 +297,9 @@ public class TrashNotepadWindow extends Window {
     private void saveData() {
         List<String> saved = new ArrayList<>();
         for (StringBuilder sb : lines) {
-            if (!sb.toString().trim().isEmpty()) {
-                saved.add(sb.toString().trim());
-            }
+            if (!sb.toString().trim().isEmpty()) saved.add(sb.toString().trim());
         }
-        module.updateList(saved); // Gọi hàm vừa thêm
-        com.vanphuc.utils.ConfigManager.save(); // Lưu xuống file hutienmong.json
+        module.saveListSetting.setValue(saved); // Cập nhật trực tiếp vào module [cite: 411, 671, 983]
+        ConfigManager.save();
     }
 }
