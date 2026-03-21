@@ -5,11 +5,10 @@ import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Window;
 import com.vanphuc.gui.navigation.HudWindow;
 import com.vanphuc.gui.navigation.Page;
+import com.vanphuc.gui.navigation.ConfigPage; // Thêm import này
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
 import com.vanphuc.module.settings.*;
-// NHỚ THÊM IMPORT NÀY:
-import com.vanphuc.module.settings.StringListSetting;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
@@ -22,8 +21,18 @@ public class ConfigManager {
 
     public static void save() {
         JsonObject root = new JsonObject();
-        JsonObject modulesObj = new JsonObject();
 
+        // --- LƯU CONFIG HỆ THỐNG (CLIENT SETTINGS) ---
+        JsonObject clientObj = new JsonObject();
+        clientObj.addProperty("snapping", ClientConfig.snapping);
+        clientObj.addProperty("showGrid", ClientConfig.showGrid);
+        clientObj.addProperty("gridSize", ClientConfig.gridSize);
+        clientObj.addProperty("guiKey", ClientConfig.guiKey);
+        clientObj.addProperty("guiMods", ClientConfig.guiMods);
+        root.add("client", clientObj);
+
+        // --- LƯU MODULE VÀ SETTINGS ---
+        JsonObject modulesObj = new JsonObject();
         for (Module module : Modules.get().getAll()) {
             JsonObject moduleObj = new JsonObject();
             moduleObj.addProperty("active", module.isActive());
@@ -52,12 +61,9 @@ public class ConfigManager {
                     keyObj.addProperty("key", ks.getKey());
                     keyObj.addProperty("mods", ks.getModifiers());
                     settingsObj.add(setting.getName(), keyObj);
-                }
-                else if (setting instanceof StringSetting strS) {
+                } else if (setting instanceof StringSetting strS) {
                     settingsObj.addProperty(setting.getName(), strS.getValue());
-                }
-
-                else if (setting instanceof StringListSetting sls) {
+                } else if (setting instanceof StringListSetting sls) {
                     JsonArray arr = new JsonArray();
                     for (String s : sls.getValue()) {
                         arr.add(s);
@@ -77,7 +83,6 @@ public class ConfigManager {
                 for (Window window : page.windows) {
                     if (window instanceof HudWindow hw) {
                         JsonObject hudJson = new JsonObject();
-                        // Đổi hw.position thành hw.getPosition()
                         hudJson.addProperty("x", hw.getPosition().getX());
                         hudJson.addProperty("y", hw.getPosition().getY());
                         hudJson.addProperty("enabled", hw.enabled);
@@ -90,7 +95,7 @@ public class ConfigManager {
 
         // --- LƯU DANH SÁCH FRIEND ---
         JsonArray friendsArray = new JsonArray();
-        for (String f : com.vanphuc.utils.FriendManager.getFriends()) {
+        for (String f : FriendManager.getFriends()) {
             friendsArray.add(f);
         }
         root.add("friends", friendsArray);
@@ -108,6 +113,22 @@ public class ConfigManager {
         try (FileReader reader = new FileReader(CONFIG_FILE)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
+            // --- TẢI CONFIG HỆ THỐNG ---
+            if (root.has("client")) {
+                JsonObject clientObj = root.getAsJsonObject("client");
+                if (clientObj.has("snapping")) ClientConfig.snapping = clientObj.get("snapping").getAsBoolean();
+                if (clientObj.has("showGrid")) ClientConfig.showGrid = clientObj.get("showGrid").getAsBoolean();
+                if (clientObj.has("gridSize")) ClientConfig.gridSize = clientObj.get("gridSize").getAsInt();
+                if (clientObj.has("guiKey")) ClientConfig.guiKey = clientObj.get("guiKey").getAsInt();
+                if (clientObj.has("guiMods")) ClientConfig.guiMods = clientObj.get("guiMods").getAsInt();
+
+                // Đồng bộ lại UI Settings trong ConfigPage
+                ConfigPage.snappingSetting.setValue(ClientConfig.snapping);
+                ConfigPage.showGridSetting.setValue(ClientConfig.showGrid);
+                ConfigPage.gridSizeSetting.setValue((double) ClientConfig.gridSize);
+                ConfigPage.guiKeybindSetting.setKey(ClientConfig.guiKey, ClientConfig.guiMods);
+            }
+
             // --- TẢI MODULE VÀ SETTINGS ---
             if (root.has("modules")) {
                 JsonObject modulesObj = root.getAsJsonObject("modules");
@@ -119,6 +140,7 @@ public class ConfigManager {
                         if (moduleObj.has("active") && moduleObj.get("active").getAsBoolean()) {
                             if (!module.isActive()) module.toggle();
                         }
+
                         if (GuiManager.getInstance().pages != null && !GuiManager.getInstance().pages.isEmpty()) {
                             for (Window window : GuiManager.getInstance().pages.get(0).windows) {
                                 if (window instanceof com.vanphuc.gui.window.ModuleWindow mw && mw.getModule() == module) {
@@ -144,11 +166,9 @@ public class ConfigManager {
                                         } else if (setting instanceof KeybindSetting ks) {
                                             JsonObject keyObj = settingsObj.getAsJsonObject(setting.getName());
                                             ks.setKey(keyObj.get("key").getAsInt(), keyObj.get("mods").getAsInt());
-                                        }
-                                        else if (setting instanceof StringSetting strS) {
+                                        } else if (setting instanceof StringSetting strS) {
                                             strS.setValue(settingsObj.get(setting.getName()).getAsString());
-                                        }
-                                        else if (setting instanceof StringListSetting sls) {
+                                        } else if (setting instanceof StringListSetting sls) {
                                             JsonArray arr = settingsObj.getAsJsonArray(setting.getName());
                                             List<String> list = new ArrayList<>();
                                             for (JsonElement e : arr) {
@@ -173,7 +193,7 @@ public class ConfigManager {
                 for (JsonElement e : friendsArray) {
                     loadedFriends.add(e.getAsString());
                 }
-                com.vanphuc.utils.FriendManager.setFriends(loadedFriends);
+                FriendManager.setFriends(loadedFriends);
             }
 
             // --- TẢI TRẠNG THÁI & TỌA ĐỘ CỦA HUD ---
@@ -184,7 +204,6 @@ public class ConfigManager {
                         if (window instanceof HudWindow hw) {
                             if (hudsObj.has(hw.getTitle())) {
                                 JsonObject hudJson = hudsObj.getAsJsonObject(hw.getTitle());
-                                // Đổi hw.position thành hw.getPosition()
                                 if (hudJson.has("x")) hw.getPosition().setX(hudJson.get("x").getAsFloat());
                                 if (hudJson.has("y")) hw.getPosition().setY(hudJson.get("y").getAsFloat());
                                 if (hudJson.has("enabled")) hw.enabled = hudJson.get("enabled").getAsBoolean();

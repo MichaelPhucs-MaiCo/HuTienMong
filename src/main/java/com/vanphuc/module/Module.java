@@ -1,5 +1,6 @@
 package com.vanphuc.module;
 
+import com.vanphuc.HuTienMongClient;
 import com.vanphuc.module.settings.Setting;
 import com.vanphuc.module.settings.KeybindSetting;
 import net.minecraft.client.MinecraftClient;
@@ -43,11 +44,13 @@ public abstract class Module {
 
     public void onActivate() {
         active = true;
+        HuTienMongClient.EVENT_BUS.subscribe(this); // Đăng ký nhận sự kiện
         info("Module " + name + " đã bật.");
     }
 
     public void onDeactivate() {
         active = false;
+        HuTienMongClient.EVENT_BUS.unsubscribe(this); // Hủy đăng ký
         info("Module " + name + " đã tắt.");
     }
 

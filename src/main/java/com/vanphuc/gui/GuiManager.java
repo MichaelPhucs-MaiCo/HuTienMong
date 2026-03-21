@@ -14,6 +14,8 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.vanphuc.gui.navigation.ConfigPage.guiKeybindSetting;
+
 public class GuiManager {
     private static GuiManager INSTANCE;
 
@@ -225,8 +227,8 @@ public class GuiManager {
         }
         // Nếu GUI ĐANG ĐÓNG
         else {
-            // Mở GUI bằng phím ` (Grave)
-            if (key == GLFW.GLFW_KEY_GRAVE_ACCENT) {
+          // Kiểm tra phím thông qua setting keybind
+            if (guiKeybindSetting.matches(key, mods)) {
                 toggle();
                 return true;
             }

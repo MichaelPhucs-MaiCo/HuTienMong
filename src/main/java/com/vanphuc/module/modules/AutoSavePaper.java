@@ -21,14 +21,14 @@ import java.util.*;
 
 public class AutoSavePaper extends Module {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
-    public final ActionSetting openTrashBtn = new ActionSetting("Mở Trash List", () -> openNotepad(true));
-    public final ActionSetting openSaveBtn = new ActionSetting("Mở Save List", () -> openNotepad(false));
-
-    public final StringSetting checkSlotsSetting = new StringSetting("SlotsToCheck", "7-8-9");
-    public final NumberSetting saveTimeMinutes = new NumberSetting("Time Loop (Min)", 5.0, 1.0, 120.0);
-    public final NumberSetting actionDelayMs = new NumberSetting("Action Delay (ms)", 500.0, 100.0, 2000.0);
-    public final BooleanSetting passiveEnabled = new BooleanSetting("Passive Mechanism", true);
-    public final NumberSetting passiveDelaySetting = new NumberSetting("Passive Delay (s)", 5.0, 1.0, 60.0);
+    public final ActionSetting openTrashBtn = new ActionSetting("Mở Danh Sách Trash", () -> openNotepad(true));
+    public final ActionSetting openSaveBtn = new ActionSetting("Mở Danh Sách Save", () -> openNotepad(false));
+    public final StringSetting checkSlotsSetting = new StringSetting("Slots Check", "7-8-9");
+    public final NumberSetting saveTimeMinutes = new NumberSetting("Time Loop (min)", 5.0, 1.0, 120.0);
+    public final NumberSetting actionDelayMs = new NumberSetting("Delay thao tác (ms)", 500.0, 100.0, 2000.0);
+    public final BooleanSetting passiveEnabled = new BooleanSetting("Tự động cất đồ khi tự mở kho", true);
+    public final NumberSetting passiveDelaySetting = new NumberSetting("Delay cất đồ khi tự mở kho (s)", 5.0, 1.0, 60.0);
+    public final StringSetting resetSlotSetting = new StringSetting("Quay lại slot (1-9)", "1");
     public final StringListSetting trashListSetting = new StringListSetting("TrashList", new ArrayList<>());
     public final StringListSetting saveListSetting = new StringListSetting("SaveList", new ArrayList<>());
 
@@ -44,13 +44,14 @@ public class AutoSavePaper extends Module {
         setupCommands();
     }
     private void setupSettings() {
-        addSetting(openTrashBtn);
-        addSetting(openSaveBtn);
         addSetting(checkSlotsSetting);
         addSetting(saveTimeMinutes);
         addSetting(actionDelayMs);
         addSetting(passiveEnabled);
         addSetting(passiveDelaySetting);
+        addSetting(resetSlotSetting);
+        addSetting(openTrashBtn);
+        addSetting(openSaveBtn);
     }
 
     private void setupCommands() {
@@ -129,7 +130,7 @@ public class AutoSavePaper extends Module {
                 if (mc.currentScreen instanceof GenericContainerScreen container) {
                     String title = container.getTitle().getString();
                     if (title.contains("Vault") || title.contains("Ender Chest")) {
-                        mc.player.getInventory().selectedSlot = 0;
+                        mc.player.getInventory().selectedSlot = getResetSlot();
                         autoDepositItems(container, true);
                         delayTimer = now + actionDelayMs.getValue().longValue();
                         cycleState = CycleState.CLOSE_SAVE_GUI;
@@ -166,23 +167,20 @@ public class AutoSavePaper extends Module {
         if (mc.currentScreen instanceof GenericContainerScreen container) {
             String title = container.getTitle().getString();
 
-            // Chỉ chạy nếu tiêu đề chứa Vault hoặc Ender Chest
             if ((title.contains("Vault") || title.contains("Ender Chest")) && !lastGuiTitle.equals(title)) {
 
                 if (passiveTimer == 0) {
-                    // Lấy giá trị từ Setting nhân với 1000 để ra mili giây
                     passiveTimer = now + (long)(passiveDelaySetting.getValue() * 1000L);
                 }
 
                 if (now >= passiveTimer) {
                     autoDepositItems(container, true);
-                    lastGuiTitle = title; // Đánh dấu đã đổ đồ xong
+                    lastGuiTitle = title;
                     passiveTimer = 0;
                     info("Cơ chế Passive: Đã tự động cất đồ quý!");
                 }
             }
         } else {
-            // Reset timer khi đóng GUI
             passiveTimer = 0;
             lastGuiTitle = "";
         }
@@ -219,7 +217,6 @@ public class AutoSavePaper extends Module {
 
     private boolean isProtectedItem(ItemStack stack) {
         String name = stack.getName().getString();
-        // CHẶN TUYỆT ĐỐI: Giới Chỉ và Menu
         if (name.contains("Giới Chỉ") || name.contains("Menu")) return true;
 
         Item item = stack.getItem();
@@ -289,6 +286,14 @@ public class AutoSavePaper extends Module {
         cycleState = CycleState.IDLE;
         nextCycleTime = now + (long)(saveTimeMinutes.getValue() * 60000L);
         info("Đã hoàn thành cất đồ & dọn rác!");
+    }
+    private int getResetSlot() {
+        try {
+            int slot = Integer.parseInt(resetSlotSetting.getValue().trim()) - 1;
+            return Math.max(0, Math.min(8, slot));
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private enum CycleState { IDLE, START_SAVE_PHASE, WAITING_SAVE_GUI, CLOSE_SAVE_GUI, START_TRASH_PHASE, WAITING_TRASH_GUI, FINISH_CYCLE }

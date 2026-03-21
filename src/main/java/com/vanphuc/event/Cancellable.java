@@ -1,9 +1,9 @@
-package com.vanphuc.event.events;
+package com.vanphuc.event;
 
 import meteordevelopment.orbit.ICancellable;
 
-public abstract class AbstractEvent implements ICancellable {
-    private boolean cancelled;
+public class Cancellable implements ICancellable {
+    private boolean cancelled = false;
 
     @Override
     public void setCancelled(boolean cancelled) {
