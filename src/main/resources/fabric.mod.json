@@ -27,7 +27,8 @@
 		"fabricloader": ">=0.16.10",
 		"minecraft": "1.21.4",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"mixinextras": ">=0.5.0"
 	},
 	"suggests": {
 		"modmenu": "*"
