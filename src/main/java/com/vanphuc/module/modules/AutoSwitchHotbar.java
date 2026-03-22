@@ -4,7 +4,7 @@ import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.StringListSetting;
 import com.vanphuc.gui.GuiManager;
-import com.vanphuc.gui.window.NotepadWindow;
+import com.vanphuc.gui.window.windows.ListSwitchHotbar;
 import com.vanphuc.gui.Rectangle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Items;
@@ -28,7 +28,7 @@ public class AutoSwitchHotbar extends Module {
         MinecraftClient mc = MinecraftClient.getInstance();
         float x = (mc.getWindow().getScaledWidth() - 250) / 2f;
         float y = mc.getWindow().getScaledHeight() / 3f;
-        GuiManager.getInstance().addWindow(new NotepadWindow(this, new Rectangle(x, y, 250, 150)));
+        GuiManager.getInstance().addWindow(new ListSwitchHotbar(this, new Rectangle(x, y, 250, 150)));
     });
 
     public AutoSwitchHotbar() {

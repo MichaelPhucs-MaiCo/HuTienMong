@@ -26,6 +26,7 @@ public class Modules {
         add(new CopyDataComp());
         add(new AutoQuest());
         add(new AntiBlind());
+        add(new NoWeather());
     }
 
     public static Modules get() {

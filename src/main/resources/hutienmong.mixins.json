@@ -12,7 +12,9 @@
 		"BossBarHudAccessor",
 		"BackgroundRendererMixin",
 		"LightmapTextureManagerMixin",
-		"WorldRendererMixin"
+		"WorldRendererMixin",
+		"WorldMixin",
+		"LunarWorldViewMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

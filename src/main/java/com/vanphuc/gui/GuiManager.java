@@ -50,8 +50,8 @@ public class GuiManager {
             moduleWindows.add(window);
         }
 
-        // Tạo bảng quản lý Modules
-        ToggleModulesList modulesListWindow = new ToggleModulesList("Modules Manager", 420, 150, 150, moduleWindows);
+        // Tạo bảng quản lý Modules (Lấy tọa độ từ biến static đã được ConfigManager nạp)
+        ToggleModulesList modulesListWindow = new ToggleModulesList("Modules Manager", ToggleModulesList.savedX, ToggleModulesList.savedY, 150, moduleWindows);
         modulesPage.addWindow(modulesListWindow);
 
         // Bắt buộc add các ModuleWindow vào page để nó nhận event (tàng hình hay không do nó tự quyết định)
@@ -234,6 +234,9 @@ public class GuiManager {
             }
 
             // XỬ LÝ BẬT TẮT MODULE BẰNG PHÍM TẮT
+            if (com.vanphuc.utils.ClientConfig.blockKeybindInGui && mc.currentScreen != null) {
+                return false; // Có màn hình nào đó đang mở (Chat, Inventory, Meteor...) -> chặn bật module bằng keybind
+            }
             for (Module module : Modules.get().getAll()) {
                 if (module.keybind.matches(key, mods)) {
                     module.toggle();

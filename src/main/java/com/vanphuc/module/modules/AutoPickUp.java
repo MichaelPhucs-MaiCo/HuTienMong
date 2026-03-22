@@ -1,7 +1,7 @@
 package com.vanphuc.module.modules;
 
 import com.vanphuc.gui.GuiManager;
-import com.vanphuc.gui.window.PickUpNotepadWindow;
+import com.vanphuc.gui.window.windows.PickUpNotepadWindow;
 import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.Module;
@@ -10,7 +10,6 @@ import com.vanphuc.module.settings.BooleanSetting;
 import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.StringListSetting;
 import com.vanphuc.utils.BaritoneHelper;
-import com.vanphuc.utils.ChatUtils;
 import com.vanphuc.utils.FriendManager;
 import com.vanphuc.utils.render.RenderWorldUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;

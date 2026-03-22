@@ -2,14 +2,11 @@ package com.vanphuc.module.modules;
 
 import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Rectangle;
-import com.vanphuc.gui.window.AutoQuestWindow;
+import com.vanphuc.gui.window.windows.AutoQuestWindow;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.StringListSetting;
-import com.vanphuc.utils.ChatUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ClientBossBar;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;

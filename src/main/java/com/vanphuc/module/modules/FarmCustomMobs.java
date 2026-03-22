@@ -4,7 +4,7 @@ import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Rectangle;
 
 import com.vanphuc.gui.colors.Color;
-import com.vanphuc.gui.window.FarmMobsNotepadWindow;
+import com.vanphuc.gui.window.windows.FarmMobsNotepadWindow;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.BooleanSetting;
@@ -16,7 +16,6 @@ import com.vanphuc.utils.render.RenderWorldUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -40,6 +39,7 @@ public class FarmCustomMobs extends Module {
     public final BooleanSetting useWhitelist = new BooleanSetting("Né người lạ (Friend)", true);
     public final BooleanSetting enableKiting = new BooleanSetting("Đi lùi (Bunny Hop lùi)", true);
     public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm", false);
+    public final BooleanSetting enableLooting = new BooleanSetting("Tự động nhặt đồ", true);
 
     public final StringListSetting targetListSetting = new StringListSetting("TargetList", new ArrayList<>());
 
@@ -82,6 +82,7 @@ public class FarmCustomMobs extends Module {
         addSetting(useWhitelist);
         addSetting(enableKiting);
         addSetting(returnToAnchor);
+        addSetting(enableLooting);
         addSetting(openListSetting);
         addSetting(clearListSetting);
         addSetting(targetListSetting);
@@ -224,10 +225,13 @@ public class FarmCustomMobs extends Module {
                 }
             }
             case SCANNING -> {
-                currentLootEntity = findLootEntity(anchorPos, mc.player.getPos());
-                if (currentLootEntity != null) {
-                    setState(State.GOTO_LOOT);
-                    return;
+                // Kẹp thêm check: Chỉ quét đồ rơi nếu Khầy bật công tắc lụm đồ nha
+                if (enableLooting.isEnabled()) {
+                    currentLootEntity = findLootEntity(anchorPos, mc.player.getPos());
+                    if (currentLootEntity != null) {
+                        setState(State.GOTO_LOOT);
+                        return;
+                    }
                 }
 
                 currentTargetEntity = findEntityByHitbox(anchorPos);
@@ -247,8 +251,10 @@ public class FarmCustomMobs extends Module {
                     return;
                 }
 
-                // Nếu đang trên đường về tâm mà thấy đồ hoặc quái spawn ra thì quất luôn
-                if (findLootEntity(anchorPos, mc.player.getPos()) != null || findEntityByHitbox(anchorPos) != null) {
+                // Đang lững thững đi về mà liếc thấy đồ (nếu có bật nhặt) hoặc quái thì quay xe liền
+                boolean thayDoRong = enableLooting.isEnabled() && findLootEntity(anchorPos, mc.player.getPos()) != null;
+
+                if (thayDoRong || findEntityByHitbox(anchorPos) != null) {
                     setState(State.SCANNING);
                     return;
                 }

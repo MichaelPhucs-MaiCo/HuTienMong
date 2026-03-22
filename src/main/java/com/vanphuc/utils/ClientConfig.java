@@ -5,7 +5,7 @@ public class ClientConfig {
     public static boolean showGrid = true;
     public static int gridSize = 5;
     public static boolean isAnyWindowMoving = false;
-
+    public static boolean blockKeybindInGui = true;
     public static int guiKey = 96;
     public static int guiMods = 0;
 }

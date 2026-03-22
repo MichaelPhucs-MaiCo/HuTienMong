@@ -4,7 +4,6 @@ import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.Window;
 import com.vanphuc.gui.colors.Color;
-import com.vanphuc.module.modules.AutoSwitchHotbar;
 import com.vanphuc.utils.render.Render2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -14,35 +13,35 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NotepadWindow extends Window {
-    private final AutoSwitchHotbar module;
-    private final List<StringBuilder> lines = new ArrayList<>();
+public abstract class BaseNotepadWindow extends Window {
+    protected final List<StringBuilder> lines = new ArrayList<>();
 
-    // Vị trí con trỏ hiện tại
-    private int cursorLine = 0;
-    private int cursorCol = 0;
+    protected int cursorLine = 0;
+    protected int cursorCol = 0;
+    protected int selectLine = -1;
+    protected int selectCol = -1;
+    protected boolean isDraggingText = false;
 
-    // Vị trí bắt đầu bôi đen (Selection)
-    private int selectLine = -1;
-    private int selectCol = -1;
+    public BaseNotepadWindow(String title, Rectangle position) {
+        super(title, position);
+    }
 
-    private boolean isDraggingText = false;
-
-    public NotepadWindow(AutoSwitchHotbar module, Rectangle position) {
-        super("§l" + module.name + " List", position);
-        this.module = module;
-
-        if (module.getListContent().isEmpty()) {
+    // Hàm để các class con nạp dữ liệu vào
+    protected void loadData(List<String> data) {
+        lines.clear();
+        if (data == null || data.isEmpty()) {
             lines.add(new StringBuilder());
         } else {
-            for (String s : module.getListContent()) {
+            for (String s : data) {
                 lines.add(new StringBuilder(s));
             }
         }
-        // Đặt con trỏ ở cuối văn bản khi vừa mở
         cursorLine = lines.size() - 1;
         cursorCol = lines.get(cursorLine).length();
     }
+
+    // Class con bắt buộc phải định nghĩa hàm này để lưu data
+    protected abstract void onSave(List<String> data);
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
@@ -60,7 +59,6 @@ public class NotepadWindow extends Window {
             String text = lines.get(i).toString();
             float lineY = startY + (i * 12);
 
-            // 1. Vẽ Vùng Bôi Đen (Màu xanh Blue trong suốt)
             if (sel != null && i >= sel[0] && i <= sel[2]) {
                 int sCol = (i == sel[0]) ? sel[1] : 0;
                 int eCol = (i == sel[2]) ? sel[3] : text.length();
@@ -68,7 +66,6 @@ public class NotepadWindow extends Window {
                 float x1 = startX + mc.textRenderer.getWidth(text.substring(0, sCol));
                 float x2 = startX + mc.textRenderer.getWidth(text.substring(0, eCol));
 
-                // Nếu không phải dòng cuối cùng của vùng bôi đen, bôi dư ra 4px để tượng trưng cho dấu Enter
                 if (i < sel[2] && eCol == text.length()) {
                     x2 += 4;
                 }
@@ -76,10 +73,8 @@ public class NotepadWindow extends Window {
                 Render2D.drawBox(matrix, x1, lineY - 1, x2 - x1, 11, new Color(0x663B82F6));
             }
 
-            // 2. Vẽ Text
             Render2D.drawString(context, mc.textRenderer, text, startX, lineY, new Color(0xFFFFFFFF));
 
-            // 3. Vẽ Con trỏ nhấp nháy (Chỉ hiện khi KHÔNG bôi đen)
             if (i == cursorLine && !hasSelection() && (System.currentTimeMillis() / 500) % 2 == 0) {
                 float cx = startX + mc.textRenderer.getWidth(text.substring(0, cursorCol));
                 Render2D.drawBox(matrix, cx, lineY - 1, 1, 10, new Color(0xFFFFFFFF));
@@ -105,7 +100,6 @@ public class NotepadWindow extends Window {
         float startX = position.getX() + 6;
         float startY = position.getY() + titleHeight + 6;
 
-        // Click vào vùng Text
         if (button == 0 && pressed && !inTitle &&
                 mouseX >= position.getX() && mouseX <= position.getX() + position.getWidth() &&
                 mouseY >= startY && mouseY <= position.getY() + position.getHeight()) {
@@ -127,7 +121,6 @@ public class NotepadWindow extends Window {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
         } else if (isDraggingText) {
-            // Kéo chuột để bôi đen
             updateCursorByMouse(mouseX, mouseY, false);
         }
         super.onMouseMove(mouseX, mouseY);
@@ -200,7 +193,6 @@ public class NotepadWindow extends Window {
             boolean shift = (mods & GLFW.GLFW_MOD_SHIFT) != 0;
             boolean ctrl = (mods & GLFW.GLFW_MOD_CONTROL) != 0;
 
-            // XỬ LÝ TỔ HỢP PHÍM CTRL (COPY, DÁN, CẮT, CHỌN TẤT CẢ)
             if (ctrl) {
                 if (key == GLFW.GLFW_KEY_A) {
                     selectLine = 0; selectCol = 0;
@@ -219,7 +211,6 @@ public class NotepadWindow extends Window {
                 }
             }
 
-            // ĐIỀU HƯỚNG BẰNG MŨI TÊN
             if (key == GLFW.GLFW_KEY_LEFT) {
                 moveCursor(-1, shift); return true;
             } else if (key == GLFW.GLFW_KEY_RIGHT) {
@@ -230,7 +221,6 @@ public class NotepadWindow extends Window {
                 moveCursorVertical(1, shift); return true;
             }
 
-            // XÓA (BACKSPACE & DELETE)
             if (key == GLFW.GLFW_KEY_BACKSPACE) {
                 if (hasSelection()) {
                     deleteSelection();
@@ -277,8 +267,6 @@ public class NotepadWindow extends Window {
         }
         return super.onKey(key, action, mods);
     }
-
-    // --- CÁC HÀM XỬ LÝ TEXT LOGIC BÊN TRONG ---
 
     private void moveCursor(int offset, boolean shift) {
         if (shift && !hasSelection()) {
@@ -357,7 +345,6 @@ public class NotepadWindow extends Window {
     private void insertText(String str) {
         if (hasSelection()) deleteSelection();
 
-        // Xử lý các dấu xuống dòng khi copy từ bên ngoài vào
         String[] parts = str.replace("\r", "").split("\n", -1);
         if (parts.length == 1) {
             lines.get(cursorLine).insert(cursorCol, parts[0]);
@@ -379,10 +366,12 @@ public class NotepadWindow extends Window {
         saveData();
     }
 
-    private void saveData() {
+    protected void saveData() {
         List<String> saved = new ArrayList<>();
-        for (StringBuilder sb : lines) saved.add(sb.toString());
-        module.updateList(saved);
+        for (StringBuilder sb : lines) {
+            saved.add(sb.toString());
+        }
+        onSave(saved);
         com.vanphuc.utils.ConfigManager.save();
     }
 }
