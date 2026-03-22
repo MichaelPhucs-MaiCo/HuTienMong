@@ -9,7 +9,10 @@
 		"slot_index.SlotIndexButtonMixin",
 		"slot_index.TooltipSlotMixin",
 		"CopyDataCompMixin",
-		"BossBarHudAccessor"
+		"BossBarHudAccessor",
+		"BackgroundRendererMixin",
+		"LightmapTextureManagerMixin",
+		"WorldRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

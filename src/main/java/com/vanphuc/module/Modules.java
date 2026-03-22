@@ -25,6 +25,7 @@ public class Modules {
         add(new FarmCustomMobs());
         add(new CopyDataComp());
         add(new AutoQuest());
+        add(new AntiBlind());
     }
 
     public static Modules get() {

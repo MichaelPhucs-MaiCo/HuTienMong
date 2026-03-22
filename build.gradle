@@ -10,6 +10,8 @@ buildscript {
 plugins {
 	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
+	// 1. Cài cắm Shadow Plugin vào đây
+	id "com.gradleup.shadow" version "9.0.0-beta4"
 }
 
 import proguard.gradle.ProGuardTask
@@ -31,25 +33,59 @@ repositories {
 	mavenCentral()
 }
 
+// 2. Tạo configuration riêng cho Shadow
+configurations {
+	shadow
+	implementation.extendsFrom(shadow)
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// Thêm Orbit ở đây
+	// Đã lọc Fabric API như Meteor Client để giảm "mỡ thừa"
+	def fapi_version = project.fabric_version
+	modImplementation fabricApi.module("fabric-api-base", fapi_version)
+	modImplementation fabricApi.module("fabric-command-api-v2", fapi_version)
+	modImplementation fabricApi.module("fabric-rendering-v1", fapi_version)
+	modImplementation fabricApi.module("fabric-lifecycle-events-v1", fapi_version)
+	modImplementation fabricApi.module("fabric-resource-loader-v0", fapi_version)
+
+	// 3. THAY include BẰNG shadow cho Orbit
 	implementation "meteordevelopment:orbit:${project.orbit_version}"
-	include "meteordevelopment:orbit:${project.orbit_version}"
+	shadow "meteordevelopment:orbit:${project.orbit_version}"
 
-	modImplementation "com.google.code.gson:gson:2.11.0"
+	// Baritone phải compileOnly để không bị nhồi cục tạ 10MB vào mod
 	modCompileOnly("meteordevelopment:baritone:${project.baritone_version}-SNAPSHOT") { transitive = false }
 
+	// 4. THAY include BẰNG shadow cho MixinExtras
 	implementation "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
-	include "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
+	shadow "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
 }
 
+// 5. Cấu hình Shadow xào nấu thư viện
+shadowJar {
+	configurations = [project.configurations.shadow]
+	archiveClassifier.set('shadow')
+
+	// Loại bỏ mấy file rác của thư viện không cần thiết
+	exclude 'META-INF/**', '**/module-info.class'
+
+	// Ép ShadowJar đổi tên toàn bộ gói Orbit lúc build để không đụng hàng với Meteor
+	relocate 'meteordevelopment.orbit', 'com.vanphuc.shadow.orbit'
+}
+
+// 6. Trỏ đầu vào của RemapJar sang file đã được Shadow làm mỏng
+remapJar {
+	dependsOn shadowJar
+	inputFile.set(shadowJar.archiveFile)
+}
+
+// VẪN GIỮ NGUYÊN PROGUARD CỦA KHẦY Ở ĐÂY ĐỂ BẢO MẬT CODE
 tasks.register('obfuscateJar', ProGuardTask) {
 	dependsOn tasks.remapJar
+	// Đầu vào của ProGuard giờ sẽ là cái file đã được xào nấu tối ưu
 	injars tasks.remapJar.archiveFile
 
 	// Output file cuối cùng
@@ -62,7 +98,7 @@ tasks.register('obfuscateJar', ProGuardTask) {
 	configuration 'proguard.pro'
 
 	doLast {
-		println "🚀 [Hũ Tiếu Mộng] Đã build xong file bảo mật: build/libs/${outputName}"
+		println "🚀 [Hư Tiêu Mộng] Đã build xong file bảo mật siêu nhẹ: build/libs/${outputName}"
 	}
 }
 
