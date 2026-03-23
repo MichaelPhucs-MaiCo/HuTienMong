@@ -1,6 +1,7 @@
 package com.vanphuc.module;
 
 import com.vanphuc.module.modules.*;
+import com.vanphuc.module.modules_test.TestDropdown;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,9 @@ public class Modules {
         /*add(new TestRender());
         add(new TestInventory());
         add(new TestBaritone());
-        add(new HudTest());*/
+        add(new HudTest());
+        add(new TestDropdown());*/
+
 
         add(new AutoClicker());
         add(new AutoSwitchHotbar());
@@ -27,6 +30,7 @@ public class Modules {
         add(new AutoQuest());
         add(new AntiBlind());
         add(new NoWeather());
+        add(new Flight());
     }
 
     public static Modules get() {

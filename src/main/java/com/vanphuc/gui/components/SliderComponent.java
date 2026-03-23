@@ -17,8 +17,9 @@ public class SliderComponent extends UIElement {
     private boolean isEditing = false;
     private String editText = "";
 
+    // Bảng màu chuẩn Sleek Carbon cực mượt
     private final Color bgColor = new Color(0.117f, 0.117f, 0.117f, 0.5f);
-    private final Color accentColor = new Color(0xFF3B82F6);
+    private final Color accentColor = new Color(0xFF0F4C81); // Màu nhấn Xanh Blue
     private final Color textColor = new Color(0xFFFFFFFF);
     private final Color hoverColor = new Color(1f, 1f, 1f, 0.05f);
 
@@ -42,13 +43,16 @@ public class SliderComponent extends UIElement {
         String valueText;
         Color displayColor;
 
+        // Chuẩn bị format dựa trên precision
+        String formatString = "%." + setting.getPrecision() + "f";
+
         if (isEditing) {
             // Khi đang gõ: Thêm hiệu ứng con trỏ nhấp nháy mỗi nửa giây, đổi màu chữ sang Vàng (#F1C40F)
             valueText = editText + ((System.currentTimeMillis() / 500) % 2 == 0 ? "_" : "");
             displayColor = new Color(0xFFF1C40F);
         } else {
-            // Trạng thái bình thường
-            valueText = String.format("%.1f", setting.getValue());
+            // Trạng thái bình thường hiển thị số linh hoạt theo precision
+            valueText = String.format(formatString, setting.getValue()).replace(",", ".");
             displayColor = accentColor;
         }
 
@@ -88,7 +92,10 @@ public class SliderComponent extends UIElement {
     @Override
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
         float padding = 8f;
-        String currentValueText = String.format("%.1f", setting.getValue());
+
+        // Tính toán độ rộng của text linh hoạt theo precision
+        String formatString = "%." + setting.getPrecision() + "f";
+        String currentValueText = String.format(formatString, setting.getValue()).replace(",", ".");
         float valWidth = MinecraftClient.getInstance().textRenderer.getWidth(currentValueText);
         float valX = position.getX() + position.getWidth() - valWidth - padding;
         float valY = position.getY() + 4f;
@@ -103,7 +110,7 @@ public class SliderComponent extends UIElement {
                     // Nếu click vào số -> Mở chế độ edit
                     isEditing = true;
                     // Lấy số hiện tại đưa vào khung sửa (thay phẩy thành chấm để parse không bị lỗi)
-                    editText = String.format("%.1f", setting.getValue()).replace(",", ".");
+                    editText = currentValueText;
                     return true;
                 } else {
                     // Nếu click ra ngoài vùng số
@@ -168,7 +175,8 @@ public class SliderComponent extends UIElement {
     private void applyEdit() {
         isEditing = false;
         try {
-            double newValue = Double.parseDouble(editText);
+            // Thay thế dấu phẩy nhỡ người dùng gõ nhầm trên bàn phím numpad
+            double newValue = Double.parseDouble(editText.replace(",", "."));
             setting.setValue(newValue);
         } catch (NumberFormatException e) {
             // Nếu người dùng gõ linh tinh (ví dụ "....") thì vứt xó, giữ nguyên giá trị cũ

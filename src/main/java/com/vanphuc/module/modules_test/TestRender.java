@@ -1,4 +1,4 @@
-package com.vanphuc.module.modules;
+package com.vanphuc.module.modules_test;
 
 import com.vanphuc.gui.colors.Color;
 import com.vanphuc.module.Module;

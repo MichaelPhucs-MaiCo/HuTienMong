@@ -79,6 +79,10 @@ public class ConfigManager {
                     }
                     settingsObj.add(setting.getName(), arr);
                 }
+                else if (setting instanceof EnumSetting es) {
+                    // Lưu tên của hằng số Enum vào JSON
+                    settingsObj.addProperty(setting.getName(), ((Enum<?>) es.getValue()).name());
+                }
             }
             moduleObj.add("settings", settingsObj);
             modulesObj.add(module.name, moduleObj); // Đã dời dòng này ra khỏi vòng lặp Setting
@@ -195,6 +199,16 @@ public class ConfigManager {
                                                 list.add(e.getAsString());
                                             }
                                             sls.setValue(list);
+                                        }
+                                        else if (setting instanceof EnumSetting es) {
+                                            String valName = settingsObj.get(setting.getName()).getAsString();
+                                            // Duyệt danh sách các giá trị Enum để tìm đúng đối tượng
+                                            for (Object enumValue : es.getValues()) {
+                                                if (((Enum<?>) enumValue).name().equals(valName)) {
+                                                    es.setValue((Enum) enumValue);
+                                                    break;
+                                                }
+                                            }
                                         }
                                     } catch (Exception e) {
                                         System.out.println("[Hư Tiên Mộng] Lỗi load setting '" + setting.getName() + "' của module " + module.name);

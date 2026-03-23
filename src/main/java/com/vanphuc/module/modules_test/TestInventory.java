@@ -1,4 +1,4 @@
-package com.vanphuc.module.modules;
+package com.vanphuc.module.modules_test;
 
 import com.vanphuc.module.Module;
 import com.vanphuc.utils.InventoryUtils;

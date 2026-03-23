@@ -3,7 +3,7 @@ package com.vanphuc.gui.navigation.huds;
 import com.vanphuc.gui.Rectangle;
 import com.vanphuc.gui.navigation.HudWindow;
 import com.vanphuc.module.Modules;
-import com.vanphuc.module.modules.HudTest;
+import com.vanphuc.module.modules_test.HudTest;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 

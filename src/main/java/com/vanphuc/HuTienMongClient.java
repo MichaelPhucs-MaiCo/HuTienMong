@@ -17,12 +17,6 @@ public class HuTienMongClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Đăng ký Lambda Factory cho package 'com.vanphuc'
-        // Đây là bước quan trọng nhất để Orbit có thể tạo listener tốc độ cao mà không bị lỗi
-        EVENT_BUS.registerLambdaFactory("com.vanphuc", (lookupInMethod, klass) ->
-                (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup())
-        );
-
         // 1. Vòng lặp Render (Để vẽ ClickGUI và HUD)
         HudRenderCallback.EVENT.register((drawContext, renderTickCounter) -> {
             GuiManager.getInstance().render(drawContext, renderTickCounter.getTickDelta(true));
