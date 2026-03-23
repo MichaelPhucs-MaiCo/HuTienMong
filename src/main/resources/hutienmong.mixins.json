@@ -14,7 +14,10 @@
 		"LightmapTextureManagerMixin",
 		"WorldRendererMixin",
 		"WorldMixin",
-		"LunarWorldViewMixin"
+		"LunarWorldViewMixin",
+
+		"IClientPlayerEntity",
+		"IPlayerMoveC2SPacket"
 	],
 	"injectors": {
 		"defaultRequire": 1
