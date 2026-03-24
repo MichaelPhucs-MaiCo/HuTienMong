@@ -31,6 +31,7 @@ public class Modules {
         add(new AntiBlind());
         add(new NoWeather());
         add(new Flight());
+        add(new AnhVuPhiHanh());
     }
 
     public static Modules get() {
