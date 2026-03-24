@@ -1,12 +1,14 @@
 package com.vanphuc.module.settings;
 
+import com.google.gson.JsonObject;
+
 /**
  * A setting that represents a numeric value with bounds and customizable precision.
  */
 public class NumberSetting extends Setting<Double> {
     private final double min;
     private final double max;
-    private int precision = 1; // Mặc định hiển thị 1 chữ số thập phân (0.1)
+    private int precision = 1;
 
     public NumberSetting(String name, double defaultValue, double min, double max) {
         super(name, defaultValue);
@@ -14,7 +16,6 @@ public class NumberSetting extends Setting<Double> {
         this.max = max;
     }
 
-    // Hàm để Khầy set độ nhạy (ví dụ: .setPrecision(3) cho Abilities Speed)
     public NumberSetting setPrecision(int precision) {
         this.precision = precision;
         return this;
@@ -26,13 +27,9 @@ public class NumberSetting extends Setting<Double> {
 
     @Override
     public void setValue(Double value) {
-        // Ép trong khoảng min - max
         double clamped = Math.clamp(value, min, max);
-
-        // Làm tròn siêu mượt theo precision Khầy chọn
         double factor = Math.pow(10, precision);
         double rounded = Math.round(clamped * factor) / factor;
-
         super.setValue(rounded);
     }
 
@@ -46,5 +43,17 @@ public class NumberSetting extends Setting<Double> {
 
     public float getValueFloat() {
         return getValue().floatValue();
+    }
+
+    @Override
+    public void save(JsonObject parent) {
+        parent.addProperty(getName(), getValue());
+    }
+
+    @Override
+    public void load(JsonObject parent) {
+        if (parent.has(getName())) {
+            setValue(parent.get(getName()).getAsDouble());
+        }
     }
 }

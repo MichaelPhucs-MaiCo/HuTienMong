@@ -1,5 +1,6 @@
 package com.vanphuc.module.settings;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 
 /**
@@ -45,5 +46,17 @@ public class ModeSetting extends Setting<String> {
     public void cycle() {
         index = (index + 1) % modes.size();
         super.setValue(modes.get(index));
+    }
+
+    @Override
+    public void save(JsonObject parent) {
+        parent.addProperty(getName(), getValue());
+    }
+
+    @Override
+    public void load(JsonObject parent) {
+        if (parent.has(getName())) {
+            setValue(parent.get(getName()).getAsString());
+        }
     }
 }

@@ -1,9 +1,10 @@
 package com.vanphuc.module.settings;
 
+import com.google.gson.JsonObject;
+
 /**
  * Abstract class representing a setting for the Minecraft client.
- * 
- * @param <T> The type of the value stored in the setting.
+ * * @param <T> The type of the value stored in the setting.
  */
 public abstract class Setting<T> {
     private final String name;
@@ -35,4 +36,16 @@ public abstract class Setting<T> {
     public void reset() {
         this.value = defaultValue;
     }
+
+    /**
+     * Tự lưu giá trị của setting này vào JsonObject của Module.
+     * * @param parent Đối tượng JSON của module chứa setting này.
+     */
+    public abstract void save(JsonObject parent);
+
+    /**
+     * Tự nạp giá trị từ JsonObject vào setting này.
+     * * @param parent Đối tượng JSON của module chứa setting này.
+     */
+    public abstract void load(JsonObject parent);
 }

@@ -1,8 +1,8 @@
 package com.vanphuc.utils;
 
 import com.vanphuc.module.Module;
+import com.vanphuc.gui.navigation.huds.LogConsoleHud;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
 /**
  * ChatUtils – Hệ thống thông báo độc quyền của Hư Tiên Mộng. 🚀
@@ -18,6 +18,7 @@ public class ChatUtils {
     // --- HÀM GỬI LỆNH/CHAT ---
     public static void sendPlayerMsg(String message) {
         if (mc.player == null || message == null) return;
+
         if (message.startsWith("#") || message.startsWith("/")) {
             // Với MC 1.21.4, việc gửi command/chat cần qua networkHandler
             if (message.startsWith("/")) {
@@ -34,20 +35,20 @@ public class ChatUtils {
     // DẠNG 1: LOG CHUNG
     // ============================================================
     public static void addModMessage(String message) {
-        logToChat(PREFIX + message);
+        logToConsole(PREFIX + message);
     }
 
     // Hàm bonus: In đậm toàn bộ nội dung tin nhắn luôn 🔥
     public static void addModMessageBold(String message) {
-        logToChat(PREFIX + "§l" + message);
+        logToConsole(PREFIX + "§l" + message);
     }
 
     public static void error(String message) {
-        logToChat(ERROR_PREFIX + message);
+        logToConsole(ERROR_PREFIX + message);
     }
 
     public static void debug(String message) {
-        logToChat(DEBUG_PREFIX + message);
+        logToConsole(DEBUG_PREFIX + message);
     }
 
     // ============================================================
@@ -56,12 +57,12 @@ public class ChatUtils {
     public static void info(Module module, String message) {
         // Tên module sẽ được in đậm cực cháy
         String modulePrefix = "§7[§b§l" + module.name + "§r§7] §f";
-        logToChat(modulePrefix + message);
+        logToConsole(modulePrefix + message);
     }
 
     public static void error(Module module, String message) {
         String modulePrefix = "§7[§c§l" + module.name + " ❌§r§7] §f";
-        logToChat(modulePrefix + message);
+        logToConsole(modulePrefix + message);
     }
 
     // ============================================================
@@ -69,13 +70,17 @@ public class ChatUtils {
     // ============================================================
     public static void info(String prefixName, String message) {
         String fullPrefix = "§7[§d§l" + prefixName + "§r§7] §f";
-        logToChat(fullPrefix + message);
+        logToConsole(fullPrefix + message);
     }
 
-    // Hàm phụ trợ gửi tin nhắn vào khung chat Minecraft
-    private static void logToChat(String fullMsg) {
-        if (mc.player != null) {
-            mc.player.sendMessage(Text.of(fullMsg), false);
-        }
+    // ============================================================
+    // HÀM XỬ LÝ LÕI MỚI - ĐẨY VÀO HUD THAY VÌ KÊNH CHAT
+    // ============================================================
+    private static void logToConsole(String fullMsg) {
+        // Ném thẳng đoạn text đã có màu mè vào HUD
+        LogConsoleHud.addLog(fullMsg);
+
+        // (Tùy chọn) Nếu Khầy muốn log nó hiện cả ở màn hình Console của VSCode/IntelliJ để dễ soi lỗi code thì mở comment dòng dưới:
+        // System.out.println(fullMsg.replaceAll("§[0-9a-fk-or]", ""));
     }
 }

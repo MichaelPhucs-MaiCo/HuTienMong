@@ -1,5 +1,6 @@
 package com.vanphuc.module.settings;
 
+import com.google.gson.JsonObject;
 import com.vanphuc.module.Module;
 import org.lwjgl.glfw.GLFW;
 
@@ -33,13 +34,11 @@ public class KeybindSetting extends Setting<Integer> {
         return getValue() != GLFW.GLFW_KEY_UNKNOWN && getValue() != -1;
     }
 
-    // Kiểm tra xem phím bấm và phím bổ trợ có khớp không
     public boolean matches(int key, int mods) {
         if (!isBound()) return false;
         return this.getKey() == key && this.modifiers == mods;
     }
 
-    // Tạo chuỗi hiển thị đẹp mắt (VD: LCTRL + R)
     public String getFormattedKey() {
         if (!isBound()) return "None";
         StringBuilder builder = new StringBuilder();
@@ -52,7 +51,6 @@ public class KeybindSetting extends Setting<Integer> {
         if (keyName != null) {
             builder.append(keyName.toUpperCase());
         } else {
-            // Tên fallback cho các phím đặc biệt không có tên char
             switch (getKey()) {
                 case GLFW.GLFW_KEY_ENTER: builder.append("ENTER"); break;
                 case GLFW.GLFW_KEY_TAB: builder.append("TAB"); break;
@@ -65,5 +63,23 @@ public class KeybindSetting extends Setting<Integer> {
             }
         }
         return builder.toString();
+    }
+
+    @Override
+    public void save(JsonObject parent) {
+        JsonObject keybindObject = new JsonObject();
+        keybindObject.addProperty("key", getValue());
+        keybindObject.addProperty("mods", modifiers);
+        parent.add(getName(), keybindObject);
+    }
+
+    @Override
+    public void load(JsonObject parent) {
+        if (parent.has(getName()) && parent.get(getName()).isJsonObject()) {
+            JsonObject keybindObject = parent.getAsJsonObject(getName());
+            int key = keybindObject.get("key").getAsInt();
+            int mods = keybindObject.get("mods").getAsInt();
+            setKey(key, mods);
+        }
     }
 }

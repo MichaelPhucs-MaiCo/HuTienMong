@@ -3,13 +3,10 @@ package com.vanphuc.utils;
 import com.google.gson.*;
 import com.vanphuc.gui.GuiManager;
 import com.vanphuc.gui.Window;
-import com.vanphuc.gui.navigation.HudWindow;
-import com.vanphuc.gui.navigation.Page;
-import com.vanphuc.gui.navigation.ConfigPage;
-import com.vanphuc.gui.navigation.ToggleModulesList; // Import thêm cái này để xử lý Modules Manager
+import com.vanphuc.gui.navigation.*;
 import com.vanphuc.module.Module;
 import com.vanphuc.module.Modules;
-import com.vanphuc.module.settings.*;
+import com.vanphuc.module.settings.Setting; // Đã loại bỏ import thừa, chỉ giữ lại class cha Setting
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
@@ -52,40 +49,18 @@ public class ConfigManager {
                         moduleObj.addProperty("showInGui", mw.showInGui);
                         moduleObj.addProperty("guiX", mw.getPosition().getX());
                         moduleObj.addProperty("guiY", mw.getPosition().getY());
-                        break; // Break này đúng vì đã tìm thấy Window của Module hiện tại, thoát vòng lặp Window
+                        break;
                     }
                 }
             }
 
             JsonObject settingsObj = new JsonObject();
             for (Setting<?> setting : module.getSettings()) {
-                if (setting instanceof BooleanSetting bs) {
-                    settingsObj.addProperty(setting.getName(), bs.getValue());
-                } else if (setting instanceof NumberSetting ns) {
-                    settingsObj.addProperty(setting.getName(), ns.getValue());
-                } else if (setting instanceof ModeSetting ms) {
-                    settingsObj.addProperty(setting.getName(), ms.getValue());
-                } else if (setting instanceof KeybindSetting ks) {
-                    JsonObject keyObj = new JsonObject();
-                    keyObj.addProperty("key", ks.getKey());
-                    keyObj.addProperty("mods", ks.getModifiers());
-                    settingsObj.add(setting.getName(), keyObj);
-                } else if (setting instanceof StringSetting strS) {
-                    settingsObj.addProperty(setting.getName(), strS.getValue());
-                } else if (setting instanceof StringListSetting sls) {
-                    JsonArray arr = new JsonArray();
-                    for (String s : sls.getValue()) {
-                        arr.add(s);
-                    }
-                    settingsObj.add(setting.getName(), arr);
-                }
-                else if (setting instanceof EnumSetting es) {
-                    // Lưu tên của hằng số Enum vào JSON
-                    settingsObj.addProperty(setting.getName(), ((Enum<?>) es.getValue()).name());
-                }
+                // Tối ưu hóa: Gọi hàm save() đa hình
+                setting.save(settingsObj);
             }
             moduleObj.add("settings", settingsObj);
-            modulesObj.add(module.name, moduleObj); // Đã dời dòng này ra khỏi vòng lặp Setting
+            modulesObj.add(module.name, moduleObj);
         }
         root.add("modules", modulesObj);
 
@@ -160,7 +135,7 @@ public class ConfigManager {
                         if (moduleObj.has("active") && moduleObj.get("active").getAsBoolean()) {
                             if (!module.isActive()) module.toggle();
                         } else {
-                            if(module.isActive()) module.toggle(); // Tắt nếu config lưu là tắt
+                            if(module.isActive()) module.toggle();
                         }
 
                         // Load tọa độ Window của Module
@@ -181,35 +156,8 @@ public class ConfigManager {
                             for (Setting<?> setting : module.getSettings()) {
                                 if (settingsObj.has(setting.getName())) {
                                     try {
-                                        if (setting instanceof BooleanSetting bs) {
-                                            bs.setValue(settingsObj.get(setting.getName()).getAsBoolean());
-                                        } else if (setting instanceof NumberSetting ns) {
-                                            ns.setValue(settingsObj.get(setting.getName()).getAsDouble());
-                                        } else if (setting instanceof ModeSetting ms) {
-                                            ms.setValue(settingsObj.get(setting.getName()).getAsString());
-                                        } else if (setting instanceof KeybindSetting ks) {
-                                            JsonObject keyObj = settingsObj.getAsJsonObject(setting.getName());
-                                            ks.setKey(keyObj.get("key").getAsInt(), keyObj.get("mods").getAsInt());
-                                        } else if (setting instanceof StringSetting strS) {
-                                            strS.setValue(settingsObj.get(setting.getName()).getAsString());
-                                        } else if (setting instanceof StringListSetting sls) {
-                                            JsonArray arr = settingsObj.getAsJsonArray(setting.getName());
-                                            List<String> list = new ArrayList<>();
-                                            for (JsonElement e : arr) {
-                                                list.add(e.getAsString());
-                                            }
-                                            sls.setValue(list);
-                                        }
-                                        else if (setting instanceof EnumSetting es) {
-                                            String valName = settingsObj.get(setting.getName()).getAsString();
-                                            // Duyệt danh sách các giá trị Enum để tìm đúng đối tượng
-                                            for (Object enumValue : es.getValues()) {
-                                                if (((Enum<?>) enumValue).name().equals(valName)) {
-                                                    es.setValue((Enum) enumValue);
-                                                    break;
-                                                }
-                                            }
-                                        }
+                                        // Tối ưu hóa: Gọi hàm load() đa hình
+                                        setting.load(settingsObj);
                                     } catch (Exception e) {
                                         System.out.println("[Hư Tiên Mộng] Lỗi load setting '" + setting.getName() + "' của module " + module.name);
                                     }
