@@ -17,7 +17,8 @@
 		"LunarWorldViewMixin",
 
 		"IClientPlayerEntity",
-		"IPlayerMoveC2SPacket"
+		"IPlayerMoveC2SPacket",
+		"ChatHudMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -32,6 +32,7 @@ public class Modules {
         add(new NoWeather());
         add(new Flight());
         add(new AnhVuPhiHanh());
+        add(new AutoSellMLTS());
     }
 
     public static Modules get() {

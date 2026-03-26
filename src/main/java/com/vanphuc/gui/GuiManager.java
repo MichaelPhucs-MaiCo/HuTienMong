@@ -70,6 +70,7 @@ public class GuiManager {
         addHuds.add(new AutoSwitchHotbarHud(200, 190));
         addHuds.add(new AutoQuestHud(200, 220));
         addHuds.add(new LogConsoleHud(10, 150));
+        addHuds.add(new AutoSellMLTSHud(200, 150));
 
         // Khởi tạo Bảng quản lý HUD
         ToggleHudsList hudListWindow = new ToggleHudsList("HUDs Manager", 420, 150, 120, addHuds);

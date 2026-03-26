@@ -1,7 +1,7 @@
 package com.vanphuc;
 
 import com.vanphuc.module.Modules;
-import com.vanphuc.utils.ConfigManager; // THÊM IMPORT NÀY
+import com.vanphuc.utils.ConfigManager;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +13,22 @@ public class HuTienMong implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// 1. Dạy Orbit trước (BẮT BUỘC ĐỂ ĐẦU TIÊN)
+		// --- ĐOẠN QUAN TRỌNG NHẤT: ĐĂNG KÝ LAMBDA FACTORY ---
+		// 1. Đăng ký cho môi trường Dev (IntelliJ)
 		HuTienMongClient.EVENT_BUS.registerLambdaFactory("com.vanphuc", (lookupInMethod, klass) ->
+				(MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup())
+		);
+
+		// 2. Đăng ký cho môi trường đã Obfuscate (Package 'a' theo config ProGuard của Khầy)
+		// Dòng này giúp fix lỗi "No registered lambda listener for 'a.U'"
+		HuTienMongClient.EVENT_BUS.registerLambdaFactory("a", (lookupInMethod, klass) ->
 				(MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup())
 		);
 
 		LOGGER.info("Đang khởi tạo hệ thống Modules...");
 		Modules.get();
 
-		// 2. Load config (Lúc này có subscribe thoải mái cũng không sợ crash)
+		// Load config sau khi đã đăng ký EventBus thành công
 		ConfigManager.load();
 
 		LOGGER.info("Hư Tiên Mộng đã sẵn sàng và 'thông kinh mạch' Orbit! 🚀");

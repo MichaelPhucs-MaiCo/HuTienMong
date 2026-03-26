@@ -31,6 +31,3 @@
 # GIỮ MIXIN ĐỂ KHÔNG CRASH
 -keep @org.spongepowered.asm.mixin.Mixin class * { *; }
 -keepattributes *Annotation*,*Signature*
-
-# LƯU Ý: ProGuard bản miễn phí KHÔNG mã hóa được String.
-# Nếu muốn giấu chữ "Bật Chuột Trái", ông nên dùng thêm Skidfuscator.

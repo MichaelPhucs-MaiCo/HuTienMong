@@ -106,7 +106,7 @@ public class AnhVuPhiHanh extends Module {
             if (System.currentTimeMillis() > flightEndTime || currentDuration == 0) {
                 isFlying = false;
                 stopFlying();
-                info("Hết thời gian bay, hạ cánh an toàn 🪂");
+                info("Hết thời gian bay🪂");
                 return;
             }
 

@@ -39,7 +39,7 @@ public class Flight extends Module {
 
     public Flight() {
         // Khầy nhớ thêm cái Item icon cho đẹp lão nhé, em để lông chim cho đúng bài Flight
-        super("Flight", "Bay lượn như chim đại bàng nha Khầy.", Items.FEATHER.getDefaultStack());
+        super("Flight", "Flyyyyyyyyyyyyyyyyyy", Items.FEATHER.getDefaultStack());
 
         addSetting(mode);
         addSetting(speed);
