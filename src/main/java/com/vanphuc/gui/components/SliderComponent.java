@@ -29,6 +29,7 @@ public class SliderComponent extends UIElement {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
+        if (!visible) return;
         Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
         float padding = 8f;
 

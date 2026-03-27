@@ -17,6 +17,10 @@ public abstract class Setting<T> {
         this.value = defaultValue;
     }
 
+    public boolean isVisible() {
+        return true;
+    }
+
     public String getName() {
         return name;
     }

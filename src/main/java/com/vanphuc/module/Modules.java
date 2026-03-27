@@ -33,6 +33,7 @@ public class Modules {
         add(new Flight());
         add(new AnhVuPhiHanh());
         add(new AutoSellMLTS());
+        add(new AutoBatNiemChu());
     }
 
     public static Modules get() {

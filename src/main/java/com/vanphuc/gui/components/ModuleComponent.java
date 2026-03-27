@@ -41,6 +41,7 @@ public class ModuleComponent extends UIElement {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
+        if (!visible) return;
         Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
 
         // 1. Vẽ nền khi di chuột vào (Chỉ vẽ phần header)

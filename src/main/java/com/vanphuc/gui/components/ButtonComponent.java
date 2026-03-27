@@ -20,6 +20,7 @@ public class ButtonComponent extends UIElement {
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
+        if (!visible) return;
         Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
         Color currentColor = isHovered ? hoverColor : bgColor;
 

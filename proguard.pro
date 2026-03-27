@@ -31,3 +31,9 @@
 # GIỮ MIXIN ĐỂ KHÔNG CRASH
 -keep @org.spongepowered.asm.mixin.Mixin class * { *; }
 -keepattributes *Annotation*,*Signature*
+
+# CẤM PROGUARD THỊT CÁC PHƯƠNG THỨC CỦA ENUM
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}

@@ -18,7 +18,8 @@
 
 		"IClientPlayerEntity",
 		"IPlayerMoveC2SPacket",
-		"ChatHudMixin"
+		"ChatHudMixin",
+		"InGameHudAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

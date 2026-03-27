@@ -10,6 +10,8 @@ import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.BooleanSetting;
 import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.StringListSetting;
+import com.vanphuc.module.settings.EnumSetting;
+import com.vanphuc.module.settings.StringSetting;
 import com.vanphuc.utils.BaritoneHelper;
 import com.vanphuc.utils.FriendManager;
 import com.vanphuc.utils.render.RenderWorldUtils;
@@ -32,6 +34,11 @@ import java.util.*;
 
 public class FarmCustomMobs extends Module {
 
+    public enum Mode {
+        Default,
+        Custom
+    }
+
     // --- SETTINGS ---
     public final NumberSetting scanRadius = new NumberSetting("Phạm vi tìm quái", 30.0, 5.0, 100.0);
     public final NumberSetting maintainDistance = new NumberSetting("Khoảng cách đánh", 2.0, 0.5, 6.0);
@@ -41,6 +48,13 @@ public class FarmCustomMobs extends Module {
     public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm", false);
     public final BooleanSetting enableLooting = new BooleanSetting("Tự động nhặt đồ", true);
 
+    public final EnumSetting<Mode> anchorMode = new EnumSetting<>("Chế độ tâm", Mode.Default);
+    public final StringSetting customAnchorPos = new StringSetting("Tọa độ tâm (x y z)", "0 80 0") {
+        @Override
+        public boolean isVisible() {
+            return anchorMode.getValue() == Mode.Custom; // Chỉ hiện khi chọn Custom
+        }
+    };
     public final StringListSetting targetListSetting = new StringListSetting("TargetList", new ArrayList<>());
 
     public final ActionSetting openListSetting = new ActionSetting("Danh sách Mục tiêu", () -> {
@@ -76,6 +90,8 @@ public class FarmCustomMobs extends Module {
     public FarmCustomMobs() {
         super("FarmCustomMobs", "Auto farm quái custom kết hợp Baritone.", Items.DIAMOND_SWORD.getDefaultStack());
 
+        addSetting(anchorMode);
+        addSetting(customAnchorPos);
         addSetting(scanRadius);
         addSetting(maintainDistance);
         addSetting(playerDetectRadius);
@@ -152,18 +168,44 @@ public class FarmCustomMobs extends Module {
     @Override
     public void onActivate() {
         super.onActivate();
-        if (mc.player != null) {
-            if (targetListSetting.getValue().isEmpty()) {
-                error("Danh sách mục tiêu trống! Dùng '/vpMob target add' hoặc chỉnh trong UI trước ❌");
-                toggle();
-                return;
-            }
-            this.anchorPos = mc.player.getPos();
-            this.strangerLog.clear();
-            this.stationaryMap.clear();
-            setState(State.SCANNING);
-            info(String.format("Đã chốt tâm farm tại: %.1f, %.1f 📍", anchorPos.x, anchorPos.z));
+        if (mc.player == null) return;
+
+        if (targetListSetting.getValue().isEmpty()) {
+            error("Danh sách mục tiêu trống! Dùng '/vpMob target add' hoặc chỉnh trong UI trước ❌");
+            toggle();
+            return;
         }
+
+        if (anchorMode.getValue() == Mode.Default) {
+            anchorPos = mc.player.getPos();
+            info("Đã lấy tọa độ hiện tại làm tâm farm 📍");
+        } else {
+            try {
+                String text = customAnchorPos.getValue().trim();
+                String[] parts = text.split("\\s+");
+                if (parts.length >= 3) {
+                    double x = Double.parseDouble(parts[0]);
+                    double y = Double.parseDouble(parts[1]);
+                    double z = Double.parseDouble(parts[2]);
+                    anchorPos = new net.minecraft.util.math.Vec3d(x, y, z);
+                    info("Đã thiết lập tâm Custom: §b" + x + " " + y + " " + z);
+                } else {
+                    throw new Exception("Thiếu tham số tọa độ");
+                }
+            } catch (Exception e) {
+                error("Lỗi định dạng tọa độ Custom! (Ví dụ đúng: 257 84 -46)");
+                error("Tạm thời lấy tọa độ hiện tại làm tâm.");
+                anchorPos = mc.player.getPos();
+            }
+        }
+
+        // Reset các biến runtime khác
+        this.strangerLog.clear();
+        this.stationaryMap.clear();
+        state = State.SCANNING; // Giữ SCANNING để vào đúng vòng lặp farm thay vì IDLE làm treo module
+        timer = 0;
+        currentTargetEntity = null;
+        currentLootEntity = null;
     }
 
     @Override
@@ -225,7 +267,6 @@ public class FarmCustomMobs extends Module {
                 }
             }
             case SCANNING -> {
-                // Kẹp thêm check: Chỉ quét đồ rơi nếu Khầy bật công tắc lụm đồ nha
                 if (enableLooting.isEnabled()) {
                     currentLootEntity = findLootEntity(anchorPos, mc.player.getPos());
                     if (currentLootEntity != null) {
@@ -240,7 +281,6 @@ public class FarmCustomMobs extends Module {
                     return;
                 }
 
-                // Rảnh rỗi không có gì làm -> Check xem có cần lùi về tâm không
                 if (returnToAnchor.isEnabled() && mc.player.squaredDistanceTo(anchorPos) > 4.0) {
                     setState(State.RETURN_ANCHOR);
                 }
@@ -251,7 +291,6 @@ public class FarmCustomMobs extends Module {
                     return;
                 }
 
-                // Đang lững thững đi về mà liếc thấy đồ (nếu có bật nhặt) hoặc quái thì quay xe liền
                 boolean thayDoRong = enableLooting.isEnabled() && findLootEntity(anchorPos, mc.player.getPos()) != null;
 
                 if (thayDoRong || findEntityByHitbox(anchorPos) != null) {

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class UIElement {
+    public boolean visible = true;
     protected UIElement parent;
     public final List<UIElement> children = new ArrayList<>();
     protected Rectangle position = new Rectangle(0, 0, 0, 0);
@@ -24,6 +25,7 @@ public abstract class UIElement {
     }
 
     public void draw(DrawContext context, float partialTicks) {
+        if (!visible) return;
         for (UIElement child : children) {
             child.draw(context, partialTicks);
         }
@@ -46,7 +48,7 @@ public abstract class UIElement {
     }
 
     public boolean onMouseClick(double mouseX, double mouseY, int button, boolean pressed) {
-        // Propagate to children in reverse order (topmost first)
+        if (!visible) return false;
         for (int i = children.size() - 1; i >= 0; i--) {
             if (children.get(i).onMouseClick(mouseX, mouseY, button, pressed)) {
                 return true;

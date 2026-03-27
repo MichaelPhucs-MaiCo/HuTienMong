@@ -37,11 +37,15 @@ public class AutoSavePaper extends Module {
     private long passiveTimer = 0L;
     private String lastGuiTitle = "";
 
+    // THÊM BIẾN NÀY ĐỂ CHỐNG TREO
+    private long stateTimeoutTimer = 0L;
+
     public AutoSavePaper() {
         super("AutoSavePaper", "Tự động cất đồ & dọn dẹp rác 📦", Items.PAPER.getDefaultStack());
         setupSettings();
         setupCommands();
     }
+
     private void setupSettings() {
         addSetting(checkSlotsSetting);
         addSetting(saveTimeMinutes);
@@ -71,6 +75,7 @@ public class AutoSavePaper extends Module {
     }
 
     public long getRemainingSeconds() {
+        // Fix hiển thị: Chỉ hiện 0 khi thực sự đang làm việc, nếu kẹt thì vẫn tính toán tiếp
         if (cycleState != CycleState.IDLE) return 0;
         long diff = nextCycleTime - System.currentTimeMillis();
         return Math.max(0, diff / 1000);
@@ -79,13 +84,7 @@ public class AutoSavePaper extends Module {
     @Override
     public void onActivate() {
         super.onActivate();
-
-        try {
-            nextCycleTime = System.currentTimeMillis() + (long)(saveTimeMinutes.getValue() * 60000L);
-            cycleState = CycleState.IDLE;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        resetCycleState(System.currentTimeMillis()); // Reset sạch sẽ khi bật
     }
 
     @Override
@@ -96,12 +95,23 @@ public class AutoSavePaper extends Module {
 
     @Override
     public void onUpdate() {
-        if (!isActive() || mc.player == null) return;
+        if (!isActive() || mc.player == null) {
+            // Nếu bị văng khỏi server, đưa về IDLE ngay lập tức
+            if (cycleState != CycleState.IDLE) cycleState = CycleState.IDLE;
+            return;
+        }
 
         long now = System.currentTimeMillis();
 
+        // CHỐT CHẶN TIMEOUT: Nếu kẹt ở một trạng thái quá 15 giây mà không xong thì reset
+        if (cycleState != CycleState.IDLE && now > stateTimeoutTimer) {
+            error("Module bị kẹt quá lâu! Đang tự động reset về IDLE... 🛠️");
+            resetCycleState(now);
+            return;
+        }
+
         if (now >= nextCycleTime && cycleState == CycleState.IDLE) {
-            startNewCycle();
+            startNewCycle(now);
         }
 
         handlePassiveLogic(now);
@@ -118,21 +128,22 @@ public class AutoSavePaper extends Module {
                     mc.player.getInventory().selectedSlot = gioiChiSlot;
                     mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
                     cycleState = CycleState.WAITING_SAVE_GUI;
-                    delayTimer = now + 2000L;
+                    delayTimer = now + 1000L;
                 } else {
                     ChatUtils.sendPlayerMsg("/ec");
                     cycleState = CycleState.WAITING_SAVE_GUI;
-                    delayTimer = now + 2000L;
+                    delayTimer = now + 1000L;
                 }
             }
             case WAITING_SAVE_GUI -> {
                 if (mc.currentScreen instanceof GenericContainerScreen container) {
                     String title = container.getTitle().getString();
-                    if (title.contains("Vault") || title.contains("Ender Chest")) {
+                    if (title.contains("Vault") || title.contains("Ender Chest") || title.contains("Kho")) {
                         mc.player.getInventory().selectedSlot = getResetSlot();
                         autoDepositItems(container, true);
                         delayTimer = now + actionDelayMs.getValue().longValue();
                         cycleState = CycleState.CLOSE_SAVE_GUI;
+                        stateTimeoutTimer = now + 15000L; // Reset timeout cho bước tiếp theo
                     }
                 }
             }
@@ -140,24 +151,41 @@ public class AutoSavePaper extends Module {
                 mc.player.closeHandledScreen();
                 cycleState = CycleState.START_TRASH_PHASE;
                 delayTimer = now + actionDelayMs.getValue().longValue();
+                stateTimeoutTimer = now + 15000L;
             }
             case START_TRASH_PHASE -> {
                 ChatUtils.sendPlayerMsg("/trash");
                 cycleState = CycleState.WAITING_TRASH_GUI;
-                delayTimer = now + 2000L;
+                delayTimer = now + 1000L;
             }
             case WAITING_TRASH_GUI -> {
-                if (mc.currentScreen instanceof GenericContainerScreen container && container.getTitle().getString().contains("Disposal")) {
+                if (mc.currentScreen instanceof GenericContainerScreen container &&
+                        (container.getTitle().getString().contains("Disposal") || container.getTitle().getString().contains("Thùng rác"))) {
                     autoDepositItems(container, false);
                     delayTimer = now + actionDelayMs.getValue().longValue();
                     cycleState = CycleState.FINISH_CYCLE;
+                    stateTimeoutTimer = now + 15000L;
                 }
             }
             case FINISH_CYCLE -> {
                 mc.player.closeHandledScreen();
-                finishCycle(now);
+                resetCycleState(now);
+                info("Đã hoàn thành cất đồ & dọn rác! ✅");
             }
         }
+    }
+
+    // Hàm hỗ trợ reset trạng thái an toàn
+    private void resetCycleState(long now) {
+        cycleState = CycleState.IDLE;
+        nextCycleTime = now + (long)(saveTimeMinutes.getValue() * 60000L);
+        stateTimeoutTimer = 0;
+    }
+
+    private void startNewCycle(long now) {
+        cycleState = CycleState.START_SAVE_PHASE;
+        stateTimeoutTimer = now + 15000L; // Cho phép tối đa 15s để hoàn thành chu kỳ
+        info("Bắt đầu chu kỳ dọn dẹp mới! 🚀");
     }
 
     private void handlePassiveLogic(long now) {
@@ -276,16 +304,6 @@ public class AutoSavePaper extends Module {
         return Registries.ITEM.getId(stack.getItem()).toString() + "|" + stack.getName().getString();
     }
 
-    private void startNewCycle() {
-        cycleState = CycleState.START_SAVE_PHASE;
-        info("Bắt đầu chu kỳ dọn dẹp mới! 🚀");
-    }
-
-    private void finishCycle(long now) {
-        cycleState = CycleState.IDLE;
-        nextCycleTime = now + (long)(saveTimeMinutes.getValue() * 60000L);
-        info("Đã hoàn thành cất đồ & dọn rác!");
-    }
     private int getResetSlot() {
         try {
             int slot = Integer.parseInt(resetSlotSetting.getValue().trim()) - 1;

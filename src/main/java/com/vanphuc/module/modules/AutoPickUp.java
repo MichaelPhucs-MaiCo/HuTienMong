@@ -9,6 +9,8 @@ import com.vanphuc.module.settings.ActionSetting;
 import com.vanphuc.module.settings.BooleanSetting;
 import com.vanphuc.module.settings.NumberSetting;
 import com.vanphuc.module.settings.StringListSetting;
+import com.vanphuc.module.settings.EnumSetting;
+import com.vanphuc.module.settings.StringSetting;
 import com.vanphuc.utils.BaritoneHelper;
 import com.vanphuc.utils.FriendManager;
 import com.vanphuc.utils.render.RenderWorldUtils;
@@ -30,8 +32,24 @@ import java.util.List;
 
 public class AutoPickUp extends Module {
 
+    // 1. Khai báo Enum Mode
+    public enum Mode {
+        Default,
+        Custom
+    }
+
     // --- SETTINGS ---
     public final NumberSetting scanRadius = new NumberSetting("Phạm vi nhặt", 10.0, 5.0, 50.0);
+
+    // 2. Thêm Setting chọn Chế độ và Ô nhập tọa độ (Có ẩn hiện)
+    public final EnumSetting<Mode> anchorMode = new EnumSetting<>("Chế độ tâm", Mode.Default);
+    public final StringSetting customAnchorPos = new StringSetting("Tọa độ tâm (x y z)", "0 80 0") {
+        @Override
+        public boolean isVisible() {
+            return anchorMode.getValue() == Mode.Custom; // Chỉ hiện khi chọn Custom
+        }
+    };
+
     public final NumberSetting playerDetectRadius = new NumberSetting("Phạm vi radar né", 30.0, 10.0, 100.0);
     public final BooleanSetting useWhitelist = new BooleanSetting("Né người lạ (Friend)", true);
     public final BooleanSetting returnToAnchor = new BooleanSetting("Quay về tâm", true);
@@ -68,6 +86,9 @@ public class AutoPickUp extends Module {
         super("AutoPickUp", "Tự động nhặt đồ bằng Baritone", Items.HOPPER.getDefaultStack());
 
         addSetting(scanRadius);
+        // 3. Đăng ký setting mới
+        addSetting(anchorMode);
+        addSetting(customAnchorPos);
         addSetting(playerDetectRadius);
         addSetting(useWhitelist);
         addSetting(returnToAnchor);
@@ -83,7 +104,7 @@ public class AutoPickUp extends Module {
             }
         });
 
-        // Chỉ giữ lại lệnh /mPItem add
+        // Chỉ giữ lại lệnh /vpItem add
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandManager.literal("vpItem")
                     .then(ClientCommandManager.literal("add").executes(ctx -> {
@@ -123,12 +144,32 @@ public class AutoPickUp extends Module {
     @Override
     public void onActivate() {
         super.onActivate();
-        if (mc.player != null) {
+        if (mc.player == null) return;
+
+        // 4. Logic xử lý tâm khi kích hoạt
+        if (anchorMode.getValue() == Mode.Default) {
             this.anchorPos = mc.player.getPos();
-            this.state = State.SCANNING;
-            strangerLog.clear();
-            info(String.format("Đã xác định tâm lụm đồ tại: %.1f, %.1f 📍", anchorPos.x, anchorPos.z));
+            info("Đã lấy tọa độ chân làm tâm nhặt đồ 📍");
+        } else {
+            try {
+                String[] p = customAnchorPos.getValue().trim().split("\\s+");
+                if (p.length >= 3) {
+                    double x = Double.parseDouble(p[0]);
+                    double y = Double.parseDouble(p[1]);
+                    double z = Double.parseDouble(p[2]);
+                    this.anchorPos = new Vec3d(x, y, z);
+                    info(String.format("Đã chốt tâm Custom: %.1f %.1f %.1f 🎯", x, y, z));
+                } else {
+                    throw new Exception();
+                }
+            } catch (Exception e) {
+                error("Tọa độ sai định dạng! Lấy tọa độ chân làm dự phòng.");
+                this.anchorPos = mc.player.getPos();
+            }
         }
+
+        this.state = State.SCANNING;
+        strangerLog.clear();
     }
 
     @Override

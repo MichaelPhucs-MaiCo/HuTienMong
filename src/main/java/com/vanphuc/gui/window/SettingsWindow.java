@@ -32,41 +32,51 @@ public class SettingsWindow extends Window {
             else if (s instanceof EnumSetting es) addChild(new DropdownComponent(es)); // Setting mới của Khầy nè
         }
         super.initialize();
-        arrange(position);
+        // Sau khi add con xong, gọi measure và arrange ngay lập tức để ẩn những thứ cần ẩn
+        this.measure(new Size(position.getWidth(), position.getHeight()));
+        this.arrange(position);
     }
 
     @Override
     public void arrange(Rectangle finalSize) {
         this.position = finalSize;
-        // Bắt đầu vẽ từ dưới thanh tiêu đề [cite: 2504]
         float currentY = finalSize.getY() + titleHeight + 6f;
 
-        for (UIElement child : children) {
-            // BƯỚC 1: Gọi measure để linh kiện tự tính toán chiều cao (ví dụ Dropdown đang mở hay đóng)
-            child.measure(new Size(finalSize.getWidth() - (horizontalPadding * 2), settingHeight));
+        java.util.List<com.vanphuc.module.settings.Setting<?>> settings = module.getSettings();
 
-            // BƯỚC 2: Lấy chiều cao thực tế sau khi measure
+        for (int i = 0; i < children.size(); i++) {
+            UIElement child = children.get(i);
+            com.vanphuc.module.settings.Setting<?> s = settings.get(i);
+
+            // Cập nhật trạng thái visible từ Setting sang UIElement
+            child.visible = s.isVisible();
+
+            if (!child.visible) {
+                // Nếu ẩn, triệt tiêu kích thước để không chiếm chỗ và không render
+                child.getPosition().setHeight(0);
+                child.getPosition().setX(-9999); // Đẩy nó ra khỏi màn hình cho chắc cú
+                continue;
+            }
+
+            // Nếu hiện, mới tính toán vị trí
+            child.measure(new Size(finalSize.getWidth() - (horizontalPadding * 2), settingHeight));
             float actualHeight = child.getPosition().getHeight();
 
-            // BƯỚC 3: Sắp xếp linh kiện vào vị trí currentY
             child.arrange(new Rectangle(
                     finalSize.getX() + horizontalPadding,
                     currentY,
                     finalSize.getWidth() - (horizontalPadding * 2),
                     actualHeight
             ));
-
-            // BƯỚC 4: Cộng dồn currentY để thằng tiếp theo nằm ngay dưới thằng trước
             currentY += actualHeight + 2f;
         }
-
-        // Cập nhật lại chiều cao tổng của Window để bao quát hết các setting mới [cite: 2506]
+        // Cập nhật lại tổng chiều cao cửa sổ
         this.position.setHeight(Math.max(titleHeight + 10f, currentY - finalSize.getY() + 4f));
     }
 
     @Override
     public void draw(DrawContext context, float partialTicks) {
-        // Luôn arrange lại trước khi vẽ để cập nhật vị trí tức thời khi Dropdown đóng/mở [cite: 2507]
+        // Luôn arrange lại trước khi vẽ để cập nhật vị trí tức thời khi Dropdown đóng/mở
         arrange(position);
         super.draw(context, partialTicks);
 
